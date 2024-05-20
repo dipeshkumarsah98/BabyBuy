@@ -8,6 +8,13 @@
     android:padding="25dp"
     android:gravity="center">
 
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/gl_first"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+       app:layout_constraintGuide_percent="0.2"
+        />
     <TextView
         android:id="@+id/tv_welcome"
         android:layout_width="match_parent"
@@ -15,6 +22,7 @@
         android:textStyle="bold"
         android:textSize="30sp"
         android:text="Welcome back!"
+        app:layout_constraintTop_toBottomOf="@id/gl_first"
         />
 
     <TextView

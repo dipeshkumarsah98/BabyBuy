@@ -1,10 +1,8 @@
 package np.com.dipeshsah.ismt
 
+import AppConstants
 import android.content.Intent
 import android.os.Bundle
-import android.widget.Button
-import android.widget.EditText
-import android.widget.ImageView
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import np.com.dipeshsah.ismt.databinding.ActivityLoginBinding
@@ -32,6 +30,14 @@ class LoginActivity : AppCompatActivity() {
             } else {
                 showToast("Invalid email or password")
             }
+        }
+
+        binding.tvCreateAccount.setOnClickListener{
+            val registerIntent = Intent(this, RegisterActivity::class.java)
+            registerIntent.putExtra(AppConstants.KEY_ENTERED_EMAIL, "Dipesh")
+            startActivity(registerIntent);
+            finish()
+
         }
 
         /*
