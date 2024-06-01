@@ -26,7 +26,7 @@
         />
 
     <TextView
-        android:id="@+id/tv_login"
+        android:id="@+id/tv_signup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:textStyle="bold"
@@ -41,8 +41,11 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:hint="Enter your email"
+        app:errorEnabled="true"
+        app:helperTextEnabled="true"
+        app:helperText="Required"
         android:layout_marginTop="8dp"
-        app:layout_constraintTop_toBottomOf="@id/tv_login"
+        app:layout_constraintTop_toBottomOf="@id/tv_signup"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
 
@@ -61,6 +64,10 @@
         app:layout_constraintTop_toBottomOf="@id/til_email"
         android:layout_marginTop="8dp"
         android:hint="Enter your password"
+        app:endIconMode="password_toggle"
+        app:errorEnabled="true"
+        app:helperTextEnabled="true"
+        app:helperText="Required"
         style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
 
         <com.google.android.material.textfield.TextInputEditText
@@ -114,7 +121,7 @@
        >
 
        <TextView
-           android:id="@+id/tv_createAccountText"
+           android:id="@+id/tv_loginAccountText"
            android:layout_width="wrap_content"
            android:layout_height="wrap_content"
            android:layout_marginVertical="4dp"
@@ -130,9 +137,9 @@
         android:layout_marginVertical="4dp"
         android:layout_marginLeft="4dp"
         android:id="@+id/tv_createAccount"
-        app:layout_constraintStart_toEndOf="@+id/tv_createAccountText"
-        app:layout_constraintTop_toTopOf="@id/tv_createAccountText"
-        app:layout_constraintBottom_toBottomOf="@id/tv_createAccountText"
+        app:layout_constraintStart_toEndOf="@+id/tv_loginAccountText"
+        app:layout_constraintTop_toTopOf="@id/tv_loginAccountText"
+        app:layout_constraintBottom_toBottomOf="@id/tv_loginAccountText"
         />
    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

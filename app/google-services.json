@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "426079674304",
+    "project_id": "lern-25588",
+    "storage_bucket": "lern-25588.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:426079674304:android:fdd09ac1e3848f29723225",
+        "android_client_info": {
+          "package_name": "np.com.dipeshsah.ismt"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDik4TqbVpE3_vxXwDh65XwE7WyeOEMKak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

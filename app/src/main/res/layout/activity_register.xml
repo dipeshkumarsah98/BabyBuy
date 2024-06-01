@@ -5,21 +5,156 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:padding="25dp"
     tools:context=".RegisterActivity">
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="match_parent"
         android:id="@+id/main"
         android:layout_height="match_parent">
+
+    <androidx.constraintlayout.widget.Guideline
+        android:id="@+id/gl_first"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        app:layout_constraintGuide_percent="0.2"
+        />
+    <TextView
+        android:id="@+id/tv_welcome"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="30sp"
+        android:text="Don't have an account ?"
+        app:layout_constraintTop_toBottomOf="@id/gl_first"
+        />
+
+    <TextView
+        android:id="@+id/tv_signup"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textStyle="bold"
+        android:textSize="25sp"
+        android:text="Create acount"
+        app:layout_constraintTop_toBottomOf="@id/tv_welcome"
+        />
+
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_fullName"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Full name"
+            android:layout_marginTop="8dp"
+            app:errorEnabled="true"
+            app:helperTextEnabled="true"
+            app:helperText="Required"
+            app:layout_constraintTop_toBottomOf="@id/tv_signup"
+            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/tiel_fullName"
+                android:inputType="text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                />
+
+        </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_email"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:hint="Enter your email"
+        android:layout_marginTop="8dp"
+        app:layout_constraintTop_toBottomOf="@id/til_fullName"
+        app:errorEnabled="true"
+        app:helperTextEnabled="true"
+        app:helperText="Required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/tiel_email"
+            android:inputType="textEmailAddress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+    </com.google.android.material.textfield.TextInputLayout>
+    <com.google.android.material.textfield.TextInputLayout
+        android:id="@+id/til_password"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintTop_toBottomOf="@id/til_email"
+        android:layout_marginTop="8dp"
+        android:hint="Enter your password"
+        app:errorEnabled="true"
+        app:helperTextEnabled="true"
+        app:helperText="Required"
+        style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox">
+
+        <com.google.android.material.textfield.TextInputEditText
+            android:id="@+id/tiet_password"
+            android:inputType="textPassword"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            />
+
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <Button
+        android:layout_width="match_parent"
+        android:layout_marginTop="8dp"
+        android:id="@+id/b_submit"
+        android:layout_height="wrap_content"
+        android:text="Signup"
+        app:layout_constraintTop_toBottomOf="@+id/til_password"
+        android:backgroundTint="@color/black"
+        />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="OR"
+        android:layout_marginVertical="4dp"
+        android:textStyle="bold"
+        android:id="@+id/tv_or"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/b_submit"
+        />
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/tv_or"
+
+        >
+
+        <TextView
+            android:id="@+id/tv_loginAccountText"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginVertical="4dp"
+            android:text="Already have an account ?"
+            tools:layout_editor_absoluteX="69dp"
+            tools:layout_editor_absoluteY="0dp"
+            tools:ignore="MissingConstraints" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-           android:text="Register Activity"
-            android:textSize="30sp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"
+            android:text="Login here"
+            android:textStyle="bold"
+            android:layout_marginVertical="4dp"
+            android:layout_marginLeft="4dp"
+            android:id="@+id/tv_loginAccount"
+            app:layout_constraintStart_toEndOf="@+id/tv_loginAccountText"
+            app:layout_constraintTop_toTopOf="@id/tv_loginAccountText"
+            app:layout_constraintBottom_toBottomOf="@id/tv_loginAccountText"
             />
-
+        </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
 </ScrollView>
