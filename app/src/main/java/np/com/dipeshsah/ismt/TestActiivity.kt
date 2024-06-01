@@ -29,7 +29,7 @@ class TestActiivity : AppCompatActivity() {
                     startActivity(intent)
                     finish()
                 }else{
-                    val intent = Intent(this, RegisterActivity::class.java)
+                    val intent = Intent(this, Dashboard::class.java)
                     startActivity(intent)
                     finish()
                 }

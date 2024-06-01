@@ -15,7 +15,7 @@ import com.google.firebase.database.ValueEventListener
 import np.com.dipeshsah.ismt.databinding.ActivityLoginBinding
 
 class LoginActivity : AppCompatActivity() {
-    private val TAG = "Login Activity"
+    private val TAG = "Login"
     private lateinit var binding:ActivityLoginBinding
     private lateinit var  firebaseDatabase: FirebaseDatabase
     private lateinit var databaseReference: DatabaseReference
@@ -30,6 +30,15 @@ class LoginActivity : AppCompatActivity() {
         firebaseDatabase = FirebaseDatabase.getInstance()
         databaseReference = firebaseDatabase.reference.child("users")
 
+        val sharedPreference = this@LoginActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
+
+       val isLoggedIn = sharedPreference.getBoolean("isLoggedIn", false)
+        Log.i(TAG, "IsLoggedIn:: $isLoggedIn")
+
+        if(isLoggedIn) {
+            showToast("User already logged in")
+            navigateToHomeScreen()
+        }
 
         binding.bSubmit.setOnClickListener{
             val email = binding.tielEmail.text.toString()
@@ -72,6 +81,12 @@ class LoginActivity : AppCompatActivity() {
                         Log.i(TAG, "User data is $userData")
 
                         if(userData != null && userData.password == password){
+                            // For demonstration, let's just show a toast message
+                            showToast("Login successful!")
+                            val sharedPreference = this@LoginActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
+                            val editior = sharedPreference.edit()
+                            editior.putBoolean("isLoggedIn", true)
+                            editior.apply()
                             navigateToHomeScreen()
                             return
                         }
@@ -88,12 +103,6 @@ class LoginActivity : AppCompatActivity() {
 
     private fun navigateToHomeScreen() {
         // Here you would navigate to the home screen of your app
-        // For demonstration, let's just show a toast message
-        showToast("Login successful!")
-        val sharedPreference = this@LoginActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
-        val editior = sharedPreference.edit()
-        // editior.putBoolean("isLoggedIn", true)
-        editior.apply()
         // moving to dashboard
         startActivity(Intent(this@LoginActivity, Dashboard::class.java))
         finish()
