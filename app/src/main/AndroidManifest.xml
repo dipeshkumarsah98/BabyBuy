@@ -14,7 +14,7 @@
         android:theme="@style/Theme.ISMT"
         tools:targetApi="31">
         <activity
-            android:name=".Dashboard"
+            android:name=".dashboard.Dashboard"
             android:exported="false" />
         <activity
             android:name=".RegisterActivity"

@@ -7,7 +7,7 @@ import android.os.Handler
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
-import kotlin.math.log
+import np.com.dipeshsah.ismt.dashboard.Dashboard
 
 class TestActiivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
