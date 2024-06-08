@@ -12,7 +12,6 @@ import np.com.dipeshsah.ismt.dashboard.Dashboard
 class TestActiivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdge()
         Thread.sleep(3000)
         installSplashScreen()
         setContentView(R.layout.activity_test_actiivity)

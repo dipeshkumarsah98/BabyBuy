@@ -3,4 +3,12 @@
     <color name="black">#FF000000</color>
     <color name="white">#FFFFFFFF</color>
     <color name="yellow">#fffc00</color>
+    <color name="primary1">#A8DADC</color>
+    <color name="primary2">#457B9D</color>
+    <color name="secondary1">#FFB6C1</color>
+    <color name="secondary2">#E5E5E5</color>
+    <color name="accent1">#FFE066</color>
+    <color name="accent2">#F7A1A1</color>
+    <color name="darkSlateGray">#2A2A2A</color>
+    <color name="softCoral">#F7A1A1</color>
 </resources>

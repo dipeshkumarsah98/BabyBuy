@@ -1,4 +1,4 @@
-package np.com.dipeshsah.ismt
+package np.com.dipeshsah.ismt.models
 
 data class UserData(
     val id: String? = null,
