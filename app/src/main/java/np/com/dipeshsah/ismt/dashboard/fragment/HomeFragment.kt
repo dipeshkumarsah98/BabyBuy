@@ -1,13 +1,18 @@
 package np.com.dipeshsah.ismt.dashboard.fragment
 
+import AppConstants
+import android.content.Intent
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
+import np.com.dipeshsah.ismt.activity.ProductListActivity
 import np.com.dipeshsah.ismt.adapters.ProductAdapter
 import np.com.dipeshsah.ismt.databinding.FragmentHomeBinding
+import np.com.dipeshsah.ismt.dto.Categories
+import np.com.dipeshsah.ismt.dto.ProductListType
 import np.com.dipeshsah.ismt.models.ProductData
 
 class HomeFragment : Fragment() {
@@ -36,7 +41,50 @@ class HomeFragment : Fragment() {
         productAdapter = ProductAdapter(products)
         binding.rvSuggestion.adapter = productAdapter
 
+        binding.myproducts.setOnClickListener {
+           redirectToProductList(null)
+        }
+
+        binding.clothes.setOnClickListener {
+            redirectToProductList(Categories.CLOTHES)
+        }
+
+        binding.milkItems.setOnClickListener {
+            redirectToProductList(Categories.MILK)
+        }
+
+        binding.diaperr.setOnClickListener {
+            redirectToProductList(Categories.DIAPER)
+        }
+
+        binding.travelling.setOnClickListener {
+            redirectToProductList(Categories.TRAVELLING)
+        }
+
+        binding.toys.setOnClickListener {
+            redirectToProductList(Categories.PLAYING)
+        }
+
         return binding.root
+    }
+
+    private fun redirectToProductList(category: Categories?){
+        var productListType: ProductListType? = null;
+
+        when (category){
+            Categories.MILK -> productListType = ProductListType("Milk items", "milk")
+            Categories.DIAPER -> productListType = ProductListType("Diaper items", "diaper")
+            Categories.CLOTHES -> productListType = ProductListType("Clothes items", "clothes")
+            Categories.PLAYING -> productListType = ProductListType("Playing Items", "playing")
+            Categories.TRAVELLING -> productListType = ProductListType("Travelling Items", "travelling")
+            else -> {
+                productListType = ProductListType("My Products", "myProducts")
+            }
+        }
+
+        val productIntent = Intent(context, ProductListActivity::class.java)
+        productIntent.putExtra(AppConstants.CATEGORY, productListType)
+        startActivity(productIntent)
     }
 
 }

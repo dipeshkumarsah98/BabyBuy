@@ -1,4 +1,4 @@
-package np.com.dipeshsah.ismt
+package np.com.dipeshsah.ismt.dto
 
 enum class FormKey {
     EMAIL,
