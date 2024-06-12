@@ -54,7 +54,7 @@ class RegisterActivity : AppCompatActivity() {
 
         }
         // Click handler for login page
-        binding.tvSignup.setOnClickListener {
+        binding.tvLoginAccount.setOnClickListener {
             val loginIntent = Intent(this@RegisterActivity, LoginActivity::class.java)
             startActivity(loginIntent);
         }

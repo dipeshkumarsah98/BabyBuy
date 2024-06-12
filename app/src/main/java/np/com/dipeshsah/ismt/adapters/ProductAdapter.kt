@@ -16,11 +16,11 @@ class ProductAdapter(private val productList: List<ProductData>) : RecyclerView.
 
     override fun onBindViewHolder(holder: ProductViewHolder, position: Int) {
         val product = productList[position]
-        holder.productName.text = product.productName
+        holder.productName.text = product.name
         holder.productCategory.text = product.category
         holder.productPrice.text = "Price: Rs. ${product.price.toString()}"
         Glide.with(holder.itemView.context)
-            .load(product.images?.get(0))
+            .load(product.image)
             .placeholder(R.drawable.add_circle_outline_24)
             .error(R.drawable.ic_baseline_24)
             .into(holder.productImage)

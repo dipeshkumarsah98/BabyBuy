@@ -6,6 +6,7 @@
     android:layout_height="match_parent"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:padding="25dp"
+    android:background="@drawable/login_bg"
     android:gravity="center">
 
     <androidx.constraintlayout.widget.Guideline
@@ -13,27 +14,32 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-       app:layout_constraintGuide_percent="0.2"
+       app:layout_constraintGuide_percent="0.25"
         />
+
     <TextView
         android:id="@+id/tv_welcome"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textSize="30sp"
+        android:fontFamily="@font/poppins"
         android:text="Welcome back!"
+        android:textAppearance="?attr/textAppearanceHeadline5"
+        android:textColor="#61677A"
+        android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/gl_first"
-        />
+        tools:layout_editor_absoluteX="25dp" />
 
     <TextView
         android:id="@+id/tv_signup"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textStyle="bold"
-        android:textSize="25sp"
+        android:fontFamily="@font/poppins"
         android:text="Login here"
+        android:textAppearance="?attr/textAppearanceHeadline6"
+        android:textColor="@color/primary2"
+        android:textStyle="bold"
         app:layout_constraintTop_toBottomOf="@id/tv_welcome"
-        />
+        tools:layout_editor_absoluteX="25dp" />
 
 
     <com.google.android.material.textfield.TextInputLayout
@@ -52,6 +58,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/tiel_email"
             android:inputType="textEmailAddress"
+            android:fontFamily="@font/roboto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -73,6 +80,7 @@
         <com.google.android.material.textfield.TextInputEditText
             android:id="@+id/tiet_password"
             android:inputType="textPassword"
+            android:fontFamily="@font/roboto"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             />
@@ -80,24 +88,26 @@
     </com.google.android.material.textfield.TextInputLayout>
 
     <TextView
+        android:id="@+id/tv_forgetPassword"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Forgot Password?"
-        android:textStyle="bold"
         android:layout_marginTop="8dp"
-        android:id="@+id/tv_forgetPassword"
+        android:fontFamily="@font/roboto"
+        android:text="Forgot Password?"
+        android:textColor="@color/lightGray"
+        android:textStyle="bold"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/til_password"
-        />
+        app:layout_constraintTop_toBottomOf="@id/til_password" />
 
-    <Button
+    <com.google.android.material.button.MaterialButton
         android:layout_width="match_parent"
         android:layout_marginTop="8dp"
         android:id="@+id/b_submit"
         android:layout_height="wrap_content"
         android:text="Login"
         app:layout_constraintTop_toBottomOf="@+id/tv_forgetPassword"
-        android:backgroundTint="@color/black"
+        android:fontFamily="@font/roboto"
+        android:backgroundTint="@color/primary2"
         />
 
     <TextView
@@ -106,7 +116,10 @@
         android:text="OR"
         android:layout_marginVertical="4dp"
         android:textStyle="bold"
+        android:fontFamily="@font/roboto"
         android:id="@+id/tv_or"
+        android:textColor="@color/lightGray"
+        android:textAppearance="?attr/textAppearanceBodySmall"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/b_submit"
@@ -124,8 +137,11 @@
            android:id="@+id/tv_loginAccountText"
            android:layout_width="wrap_content"
            android:layout_height="wrap_content"
+           android:fontFamily="@font/roboto"
            android:layout_marginVertical="4dp"
            android:text="Don't have an account ?"
+           android:textColor="@color/lightGray"
+           android:textAppearance="?attr/textAppearanceBodySmall"
            tools:layout_editor_absoluteX="69dp"
            tools:layout_editor_absoluteY="0dp" />
 
@@ -134,12 +150,15 @@
         android:layout_height="wrap_content"
         android:text="Register here"
         android:textStyle="bold"
+       android:fontFamily="@font/roboto"
         android:layout_marginVertical="4dp"
         android:layout_marginLeft="4dp"
+           android:textColor="@color/darkSlateGray"
         android:id="@+id/tv_createAccount"
         app:layout_constraintStart_toEndOf="@+id/tv_loginAccountText"
         app:layout_constraintTop_toTopOf="@id/tv_loginAccountText"
         app:layout_constraintBottom_toBottomOf="@id/tv_loginAccountText"
+           android:textAppearance="?attr/textAppearanceBodySmall"
         />
    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
