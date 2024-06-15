@@ -2,6 +2,8 @@ package np.com.dipeshsah.ismt
 
 import android.content.Intent
 import android.os.Bundle
+import android.util.Log
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.database.DataSnapshot
@@ -29,11 +31,18 @@ class RegisterActivity : AppCompatActivity() {
         firebaseDatabase = FirebaseDatabase.getInstance()
         databaseReference = firebaseDatabase.getReference("users")
 
+        // This is dropdown Adapter
+        val items = listOf("Male", "Female", "Others")
+
+        val arrayAdapter = ArrayAdapter(this, R.layout.list_item,items)
+        binding.actvGender.setAdapter(arrayAdapter)
+
         // Click handler For Sign up button
         binding.bSubmit.setOnClickListener{
             val email = binding.tielEmail.text.toString()
             val password = binding.tietPassword.text.toString()
             val fullName = binding.tielFullName.text.toString()
+            val gender = binding.actvGender.text.toString()
 
             if(email.isEmpty()){
                 validForm(FormKey.EMAIL, "Email is required")
@@ -49,7 +58,7 @@ class RegisterActivity : AppCompatActivity() {
 
             if (email.isNotEmpty() && password.isNotEmpty() && fullName.isNotEmpty())
             {
-                signupUser(fullName, email, password)
+                signupUser(fullName, email, password, gender)
             }
 
         }
@@ -70,17 +79,18 @@ class RegisterActivity : AppCompatActivity() {
        }
     }
 
-    private fun signupUser(name: String, email: String, password: String){
+    private fun signupUser(name: String, email: String, password: String, gender: String){
         databaseReference.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(object: ValueEventListener{
             override fun onDataChange(dataSnapshot: DataSnapshot) {
                 if(!dataSnapshot.exists()){
                     val id = databaseReference.push().key
-                    val userData = UserData(id, name, email, password)
+                    val userData = UserData(id = id, name = name, email = email, password = password, gender = gender)
+
+                    Log.i(TAG, "signupUser: $userData")
                     databaseReference.child(id!!).setValue(userData)
                     showToast("Signup Successful")
                     startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
                     finish()
-
                 }
                 else{
                     showToast("Email should be unique")

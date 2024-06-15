@@ -43,6 +43,7 @@ class Dashboard : AppCompatActivity() {
                 }
             }
         }
+
     }
 
     private fun loadRespectiveFragment(fragment: Fragment){

@@ -88,13 +88,15 @@ class LoginActivity : AppCompatActivity() {
                             val sharedPreference = this@LoginActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
                             val editior = sharedPreference.edit()
                             editior.putBoolean("isLoggedIn", true)
+                            editior.putString("userId", userData.id)
+                            editior.putString("userEmail", userData.email)
                             editior.apply()
                             navigateToHomeScreen()
                             return
                         }
                     }
                 }
-                showToast("Login Failed")
+                showToast("Invalid email or password")
             }
 
             override fun onCancelled(error: DatabaseError) {
