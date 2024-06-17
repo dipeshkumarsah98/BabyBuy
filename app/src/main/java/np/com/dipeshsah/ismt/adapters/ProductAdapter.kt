@@ -21,8 +21,8 @@ class ProductAdapter(private val productList: List<ProductData>) : RecyclerView.
         holder.productPrice.text = "Price: Rs. ${product.price.toString()}"
         Glide.with(holder.itemView.context)
             .load(product.image)
-            .placeholder(R.drawable.add_circle_outline_24)
-            .error(R.drawable.ic_baseline_24)
+            .placeholder(R.drawable.no_image_blue)
+            .error(R.drawable.no_image_blue)
             .into(holder.productImage)
     }
 

@@ -9,7 +9,8 @@ android:background="@drawable/background"
 app:layout_marginBaseline="8dp"
 tools:context=".dashboard.fragment.ProfileFragment"
 >
-    <ProgressBar
+
+    <com.google.android.material.progressindicator.CircularProgressIndicator
         android:id="@+id/progressBar"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
@@ -18,7 +19,10 @@ tools:context=".dashboard.fragment.ProfileFragment"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent"
-        android:visibility="gone" />
+        android:visibility="gone"
+        app:indicatorColor="@color/primary2"
+        android:indeterminate="true"
+        />
 
     <TextView
         android:id="@+id/tv_settingPage"
@@ -230,11 +234,13 @@ tools:context=".dashboard.fragment.ProfileFragment"
             >
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/b_logout"
-                app:icon="@drawable/delete_icon"
+                app:icon="@drawable/logout_icon"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:text="Logout"
-                android:backgroundTint="@color/red"
+                android:backgroundTint="@color/secondary2"
+                android:textColor="@color/darkSlateGray"
+                app:iconTint="@color/darkSlateGray"
                 />
 
             <com.google.android.material.button.MaterialButton

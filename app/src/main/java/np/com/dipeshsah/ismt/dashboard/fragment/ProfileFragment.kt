@@ -1,6 +1,7 @@
 package np.com.dipeshsah.ismt.dashboard.fragment
 
 import android.app.Activity
+import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
@@ -9,14 +10,18 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import com.bumptech.glide.Glide
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import np.com.dipeshsah.ismt.LoginActivity
+import np.com.dipeshsah.ismt.R
 import np.com.dipeshsah.ismt.activity.UpdateProfileActivity
 import np.com.dipeshsah.ismt.databinding.FragmentProfileBinding
 import np.com.dipeshsah.ismt.models.UserData
-import np.com.dipeshsah.ismt.utils.FirebaseHelper
+import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
 
 
 class ProfileFragment : Fragment() {
@@ -32,7 +37,6 @@ class ProfileFragment : Fragment() {
         }
     }
 
-
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
@@ -43,7 +47,7 @@ class ProfileFragment : Fragment() {
     ): View? {
         binding = FragmentProfileBinding.inflate(layoutInflater, container, false);
         // get the userId from the storage
-        val sharedPreference = activity?.getSharedPreferences("app", 0)
+         val sharedPreference = activity?.getSharedPreferences("app", 0)
         val userId = sharedPreference?.getString("userId", null)
 
         userId?.let {
@@ -59,29 +63,53 @@ class ProfileFragment : Fragment() {
         }
 
         binding.bLogout.setOnClickListener {
-            // remove the userId from the storage
-            sharedPreference?.edit()?.remove("userId")?.apply()
-            sharedPreference?.edit()?.remove("isLoggedIn")?.apply()
-            sharedPreference?.edit()?.remove("userEmail")?.apply()
+            showLogoutDialog(requireContext())
 
-            // navigate to login activity
-            activity?.finish()
         }
 
 
         return binding.root
     }
 
+    private fun showLogoutDialog(context: Context) {
+        MaterialAlertDialogBuilder(context)
+            .setTitle(context.resources.getString(R.string.logout_title))
+            .setMessage(context.resources.getString(R.string.logout_message))
+            .setNeutralButton(context.resources.getString(R.string.cancel)) { dialog, _ ->
+                // Respond to neutral button press
+                dialog.dismiss()
+            }
+            .setNegativeButton(context.resources.getString(R.string.decline)) { dialog, _ ->
+                // Respond to negative button press
+                dialog.dismiss()
+            }
+            .setPositiveButton(context.resources.getString(R.string.accept)) { dialog, _ ->
+                // Respond to positive button press
+                logoutUser()
+            }
+            .show()
+    }
     private fun showSnackbar(message: String) {
         view?.let {
             Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
         }
     }
 
+    private fun logoutUser() {
+        val sharedPreference = activity?.getSharedPreferences("app", 0)
+        // remove the userId from the storage
+        sharedPreference?.edit()?.remove("userId")?.apply()
+        sharedPreference?.edit()?.remove("isLoggedIn")?.apply()
+        sharedPreference?.edit()?.remove("userEmail")?.apply()
+
+        // navigate to login activity
+        startActivity(Intent(activity, LoginActivity::class.java))
+    }
+
 
     private fun getUserData(userId: String) {
         showProgressBar(true)
-        val databaseReference = FirebaseHelper.getDatabaseReference("users/$userId")
+        val databaseReference = FirebaseDatabaseHelper.getDatabaseReference("users/$userId")
         databaseReference.addValueEventListener(object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
                 val user = snapshot.getValue(UserData::class.java)
@@ -96,6 +124,28 @@ class ProfileFragment : Fragment() {
 
                 // show no of start as same of password length
                 binding.tvPasswordFieldValue.text = "*".repeat(user?.password?.length ?: 0)
+
+                user?.profileImage?.let {
+                    // If user has profile pic
+                    Glide.with(this@ProfileFragment)
+                    .load(user.profileImage)
+                    .placeholder(R.drawable.user_icon)
+                    .error(R.drawable.logo)
+                    .into(binding.ivProfilePic)
+                } ?: run{
+                    // show default profile pic
+                    when (user?.gender) {
+                        "Male" -> {
+                            binding.ivProfilePic.setImageResource(R.drawable.maleprofile)
+                        }
+                        "Female" -> {
+                            binding.ivProfilePic.setImageResource(R.drawable.femaleprofile)
+                        }
+                        else -> {
+                            binding.ivProfilePic.setImageResource(R.drawable.user_icon)
+                        }
+                    }
+                }
 
                 showProgressBar(false)
             }

@@ -6,7 +6,9 @@ data class ProductData(
     var description: String? = null,
     var category: String? = null,
     var price: Int? = null,
+    var quantity: Int? = null,
     var image: String? = null,
     var storeLocationLat: String? = null,
     var storeLocationLng: String? = null,
+    val userId: String? = null
 )

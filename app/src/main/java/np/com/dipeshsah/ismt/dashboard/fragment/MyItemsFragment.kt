@@ -1,33 +1,30 @@
 package np.com.dipeshsah.ismt.dashboard.fragment
 
+import android.content.Context
 import android.os.Bundle
+import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import np.com.dipeshsah.ismt.R
+import androidx.recyclerview.widget.LinearLayoutManager
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import np.com.dipeshsah.ismt.adapters.ProductAdapter
+import np.com.dipeshsah.ismt.databinding.FragmentMyItemsBinding
+import np.com.dipeshsah.ismt.models.ProductData
+import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
 
-// TODO: Rename parameter arguments, choose names that match
-// the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
-private const val ARG_PARAM1 = "param1"
-private const val ARG_PARAM2 = "param2"
 
-/**
- * A simple [Fragment] subclass.
- * Use the [MyItemsFragment.newInstance] factory method to
- * create an instance of this fragment.
- */
 class MyItemsFragment : Fragment() {
-    // TODO: Rename and change types of parameters
-    private var param1: String? = null
-    private var param2: String? = null
+    private var TAG = "MyItemsFragment"
+    private lateinit var userId: String
+    private lateinit var binding: FragmentMyItemsBinding
+    private lateinit var productAdapter: ProductAdapter
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        arguments?.let {
-            param1 = it.getString(ARG_PARAM1)
-            param2 = it.getString(ARG_PARAM2)
-        }
     }
 
     override fun onCreateView(
@@ -35,26 +32,71 @@ class MyItemsFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         // Inflate the layout for this fragment
-        return inflater.inflate(R.layout.fragment_my_items, container, false)
+        binding = FragmentMyItemsBinding.inflate(layoutInflater, container, false);
+
+        val sharedPreferences = context?.getSharedPreferences("app", Context.MODE_PRIVATE)
+        userId = sharedPreferences?.getString("userId", null).toString()
+
+        userId.let {
+            fetchMyItems()
+        }
+
+        return binding.root
     }
 
-    companion object {
-        /**
-         * Use this factory method to create a new instance of
-         * this fragment using the provided parameters.
-         *
-         * @param param1 Parameter 1.
-         * @param param2 Parameter 2.
-         * @return A new instance of fragment MyItemsFragment.
-         */
-        // TODO: Rename and change types and number of parameters
-        @JvmStatic
-        fun newInstance(param1: String, param2: String) =
-            MyItemsFragment().apply {
-                arguments = Bundle().apply {
-                    putString(ARG_PARAM1, param1)
-                    putString(ARG_PARAM2, param2)
-                }
+    private fun fetchMyItems(){
+        binding.progressBar.visibility = View.VISIBLE
+        getProductList { products ->
+            if(products.isNotEmpty()){
+                binding.rvProductList.layoutManager = LinearLayoutManager(context)
+                productAdapter = ProductAdapter(products)
+                binding.rvProductList.adapter = productAdapter
+                handleEmptyProducts(true)
+            }else{
+                handleEmptyProducts(false)
+                Log.d(TAG, "No products found or an error occurred.")
             }
+        }
+     }
+
+    private fun getProductList(callback: (List<ProductData>) -> Unit){
+        FirebaseDatabaseHelper
+            .getDatabaseReference("products")
+            .orderByChild("userId")
+            .equalTo(userId)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val productList = mutableListOf<ProductData>()
+
+                    for (productSnapshot in snapshot.children) {
+                        val productId = productSnapshot.key
+                        val productData = productSnapshot.getValue(ProductData::class.java)
+
+                        productData?.let {
+                            val completeProductData = it.copy(productId = productId)
+                            productList.add(completeProductData)
+                        }
+                    }
+
+                    binding.progressBar.visibility = View.GONE
+                    callback(productList)
+                }
+
+                override fun onCancelled(error: DatabaseError) {
+                    // Handle possible errors.
+                    Log.e("FirebaseError", "Error fetching data", error.toException())
+                    callback(emptyList()) // Returning an empty list in case of error
+                    binding.progressBar.visibility = View.GONE
+                }
+            })
+    }
+    private fun handleEmptyProducts (isVisible: Boolean) {
+        if(isVisible){
+            binding.rvProductList.visibility = View.VISIBLE
+            binding.clNoData.visibility = View.GONE
+        }else{
+            binding.rvProductList.visibility = View.GONE
+            binding.clNoData.visibility = View.VISIBLE
+        }
     }
 }

@@ -1,6 +1,7 @@
 package np.com.dipeshsah.ismt.activity
 
 import AppConstants
+import android.content.Context
 import android.os.Bundle
 import android.util.Log
 import android.view.View
@@ -16,6 +17,7 @@ import np.com.dipeshsah.ismt.adapters.ProductAdapter
 import np.com.dipeshsah.ismt.databinding.ActivityProductListBinding
 import np.com.dipeshsah.ismt.dto.ProductListType
 import np.com.dipeshsah.ismt.models.ProductData
+import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
 
 class ProductListActivity : AppCompatActivity() {
     private var TAG = "ProductList"
@@ -23,6 +25,7 @@ class ProductListActivity : AppCompatActivity() {
     private lateinit var productAdapter: ProductAdapter
     private lateinit var  firebaseDatabase: FirebaseDatabase
     private lateinit var databaseReference: DatabaseReference
+    private lateinit var userId: String
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,6 +39,9 @@ class ProductListActivity : AppCompatActivity() {
         databaseReference = firebaseDatabase.reference.child("categories")
 
         var categoryDetail: ProductListType? = null
+
+        val sharedPreferences = this@ProductListActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
+        userId = sharedPreferences.getString("userId", null).toString()
 
         // getting the props from home fragment
         if (intent.hasExtra(AppConstants.CATEGORY)){
@@ -70,7 +76,7 @@ class ProductListActivity : AppCompatActivity() {
     }
 
     private fun fetchProducts(category: String) {
-        getProducts(category ) { products ->
+        getProducts(category) { products ->
             if (products.isNotEmpty()) {
                 binding.rvProductList.layoutManager = LinearLayoutManager(this)
                 productAdapter = ProductAdapter(products)
@@ -85,33 +91,70 @@ class ProductListActivity : AppCompatActivity() {
     private fun getProducts(category: String, callback: (List<ProductData>) -> Unit) {
         binding.clNoData.visibility = View.GONE
         binding.progressBar.visibility = View.VISIBLE
-        val productsReference = databaseReference.child(category)
         Log.i(TAG, "Fetching products with category $category")
-        productsReference.addListenerForSingleValueEvent(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val productList = mutableListOf<ProductData>()
+        if(category == "myProducts"){
+           FirebaseDatabaseHelper
+               .getDatabaseReference("products")
+               .orderByChild("userId")
+               .equalTo(userId)
+               .addListenerForSingleValueEvent(object : ValueEventListener {
+               override fun onDataChange(snapshot: DataSnapshot) {
+                   val productList = mutableListOf<ProductData>()
 
-                for (productSnapshot in snapshot.children) {
-                    val productId = productSnapshot.key
-                    val productData = productSnapshot.getValue(ProductData::class.java)
+                   for (productSnapshot in snapshot.children) {
+                       val productId = productSnapshot.key
+                       val productData = productSnapshot.getValue(ProductData::class.java)
+                       Log.i(TAG, "ProductData: $productData")
 
-                    productData?.let {
-                        val completeProductData = it.copy(productId = productId, category = category)
-                        productList.add(completeProductData)
+                       productData?.let {
+                           val completeProductData = it.copy(productId = productId)
+                           productList.add(completeProductData)
+                       }
+                   }
+
+                   binding.progressBar.visibility = View.GONE
+                   callback(productList)
+               }
+
+               override fun onCancelled(error: DatabaseError) {
+                   // Handle possible errors.
+                   Log.e("FirebaseError", "Error fetching data", error.toException())
+                   callback(emptyList()) // Returning an empty list in case of error
+                   binding.progressBar.visibility = View.GONE
+               }
+             })
+
+        }else {
+
+
+            val productsReference = databaseReference.child(category)
+            productsReference.addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val productList = mutableListOf<ProductData>()
+
+                    for (productSnapshot in snapshot.children) {
+                        val productId = productSnapshot.key
+                        val productData = productSnapshot.getValue(ProductData::class.java)
+
+                        productData?.let {
+                            val completeProductData =
+                                it.copy(productId = productId, category = category)
+                            productList.add(completeProductData)
+                        }
                     }
+
+                    binding.progressBar.visibility = View.GONE
+                    callback(productList)
                 }
 
-                binding.progressBar.visibility = View.GONE
-                callback(productList)
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                // Handle possible errors.
-                Log.e("FirebaseError", "Error fetching data", error.toException())
-                callback(emptyList()) // Returning an empty list in case of error
-                binding.progressBar.visibility = View.GONE
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    // Handle possible errors.
+                    Log.e("FirebaseError", "Error fetching data", error.toException())
+                    callback(emptyList()) // Returning an empty list in case of error
+                    binding.progressBar.visibility = View.GONE
+                }
+            })
+        }
     }
 
     private fun handleEmptyProducts (isVisible: Boolean) {
