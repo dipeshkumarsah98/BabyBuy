@@ -112,7 +112,7 @@ class UpdateProfileActivity : AppCompatActivity() {
     private fun populateUserDetails() {
         binding.tietName.setText(userDetails?.name)
         binding.tietEmail.setText(userDetails?.email)
-        binding.actvGender.setText(userDetails?.gender)
+        //binding.actvGender.setText(userDetails?.gender)
         // set productImage if available from firebase
         userDetails?.profileImage?.let {
             Glide.with(this)

@@ -18,6 +18,7 @@ import androidx.core.content.ContextCompat
 import np.com.dipeshsah.ismt.R
 import np.com.dipeshsah.ismt.databinding.ActivityAddOrUpdateProductBinding
 import np.com.dipeshsah.ismt.dto.ActionType
+import np.com.dipeshsah.ismt.dto.FormKey
 import np.com.dipeshsah.ismt.models.ProductData
 import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
 import np.com.dipeshsah.ismt.utils.FirebaseStorageHelper
@@ -43,7 +44,6 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         setUpActivity()
     }
 
-
     private fun fetchCategories() {
         FirebaseDatabaseHelper.getDatabaseReference("categories").get().addOnSuccessListener { snapshot ->
             val categories = mutableListOf<String>()
@@ -59,13 +59,27 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         }
     }
     private fun handleNewProduct() {
+        val name = binding.tietProductName.text.toString()
+        val description = binding.tietProductDescription.text.toString()
+        val price = binding.tietProductPrice.text.toString()
+        val category = binding.actvProductCategory.text.toString()
+
+        val isValid = validateForm(
+            name,
+            description,
+            price,
+            category
+        )
+        if(!isValid){
+            return
+        }
+
         val productReference = FirebaseDatabaseHelper.getDatabaseReference("products");
         val id = productReference.push().key
         id?.let {
             // first upload image
             uploadProfileImage(it)
         }
-
     }
     private fun createProduct(productId: String, image: String?) {
         val productReference = FirebaseDatabaseHelper.getDatabaseReference("products");
@@ -134,6 +148,34 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         }
     }
 
+    private fun validateForm(email: String, desc: String, price: String, category: String): Boolean {
+        if (email.isEmpty()) {
+            validForm(FormKey.NAME, "Name is required")
+        }
+        if (desc.isEmpty()) {
+            validForm(FormKey.DESCRIPTION, "Description is required")
+        }
+        if (price.isEmpty()) {
+            validForm(FormKey.PRICE, "Price is required")
+        }
+        if (category.isEmpty()) {
+            validForm(FormKey.CATEGORY, "Category is required")
+        }
+        if(price.toInt() <= 0){
+            validForm(FormKey.PRICE, "Price should be greater than 0")
+        }
+
+        return email.isNotEmpty() && desc.isNotEmpty() && price.isNotEmpty() && category.isNotEmpty()
+    }
+    private fun validForm(key: FormKey, value: String){
+        when (key){
+            FormKey.NAME -> binding.tilProductNameLayout.error = value
+            FormKey.DESCRIPTION -> binding.tilProductDescriptionLayout.error = value
+            FormKey.PRICE -> binding.tilProductPriceLayout.error = value
+            FormKey.CATEGORY -> binding.tilProductCategoryLayout.error = value
+            else -> {}
+        }
+    }
     private fun setUpActivity(): Unit {
         if(intent.hasExtra("action")){
             currentAction = intent.getStringExtra("action") as ActionType
@@ -176,7 +218,12 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             //captureImage()
             requestCameraPermission()
         }
+
+        binding.ibBack.setOnClickListener {
+            finish()
+        }
     }
+
     companion object {
         private val CAMERA_PERMISSION = arrayOf(
             Manifest.permission.CAMERA
