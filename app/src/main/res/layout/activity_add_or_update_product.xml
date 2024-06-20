@@ -154,7 +154,25 @@
                 android:inputType="none"
                 />
         </com.google.android.material.textfield.TextInputLayout>
+        <!-- Quantity -->
+        <com.google.android.material.textfield.TextInputLayout
+            android:id="@+id/til_product_quantity_layout"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/til_product_category_layout"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent"
+            android:hint="Quantity">
 
+            <com.google.android.material.textfield.TextInputEditText
+                android:id="@+id/tiet_product_quantity"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:inputType="number"
+                tools:text="1" />
+        </com.google.android.material.textfield.TextInputLayout>
         <!-- Price -->
         <com.google.android.material.textfield.TextInputLayout
             android:id="@+id/til_product_price_layout"
@@ -162,7 +180,7 @@
             android:layout_height="wrap_content"
             android:layout_marginHorizontal="16dp"
             android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/til_product_category_layout"
+            app:layout_constraintTop_toBottomOf="@id/til_product_quantity_layout"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="parent"
             android:hint="Price">
@@ -175,6 +193,51 @@
                 tools:text="Price" />
         </com.google.android.material.textfield.TextInputLayout>
 
+        <CheckBox
+            android:id="@+id/cb_phurchased"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:checked="true"
+            android:text="Phurchased"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            app:layout_constraintTop_toBottomOf="@id/til_product_price_layout"
+            />
+
+        <LinearLayout
+            android:id="@+id/ll_addLocation"
+            android:layout_width="match_parent"
+            app:layout_constraintTop_toBottomOf="@id/cb_phurchased"
+            android:layout_marginHorizontal="16dp"
+            android:layout_marginTop="8dp"
+            android:orientation="horizontal"
+            android:layout_height="wrap_content">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/tb_addLocation"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="8dp"
+            android:backgroundTint="@color/primary2"
+            android:textSize="12dp"
+            android:textColor="@color/secondary2"
+            android:fontFamily="@font/poppins"
+            app:icon="@drawable/add_location_24"
+            style="?attr/materialIconButtonStyle"
+            android:text="Add Store location"
+            app:iconTint="@color/secondary2"
+            app:iconPadding="5dp"
+            />
+            <TextView
+                android:id="@+id/tv_locationAddress"
+                android:layout_marginTop="5dp"
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:text="Lat: 445355 \nLong: 345345"
+                android:textAppearance="?attr/textAppearanceBodySmall"
+                android:textColor="@color/darkSlateGray"
+                />
+        </LinearLayout>
         <androidx.constraintlayout.widget.ConstraintLayout
             android:id="@+id/ll_buttonGroup"
             android:layout_width="match_parent"
@@ -182,7 +245,7 @@
             android:backgroundTint="@color/primary2"
             android:padding="16dp"
             android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/til_product_price_layout"
+            app:layout_constraintTop_toBottomOf="@+id/ll_addLocation"
             >
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/b_delete"

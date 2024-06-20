@@ -10,5 +10,6 @@ data class ProductData(
     var image: String? = null,
     var storeLocationLat: String? = null,
     var storeLocationLng: String? = null,
-    val userId: String? = null
+    val userId: String? = null,
+    var markAsPurchased: Boolean = false
 )
