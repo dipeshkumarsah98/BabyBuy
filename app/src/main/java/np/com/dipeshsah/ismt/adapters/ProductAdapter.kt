@@ -10,7 +10,7 @@ import np.com.dipeshsah.ismt.viewHolders.ProductViewHolder
 
 class ProductAdapter(private val productList: List<ProductData>) : RecyclerView.Adapter<ProductViewHolder>() {
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): ProductViewHolder {
-        val view = LayoutInflater.from(parent.context).inflate(R.layout.product_item, parent, false)
+        val view = LayoutInflater.from(parent.context).inflate(R.layout.horizontal_product_item, parent, false)
         return ProductViewHolder(view)
     }
 
@@ -18,7 +18,7 @@ class ProductAdapter(private val productList: List<ProductData>) : RecyclerView.
         val product = productList[position]
         holder.productName.text = product.name
         holder.productCategory.text = product.category
-        holder.productPrice.text = "Price: Rs. ${product.price.toString()}"
+        holder.productPrice.text = "${product.price.toString()}"
         Glide.with(holder.itemView.context)
             .load(product.image)
             .placeholder(R.drawable.no_image_blue)

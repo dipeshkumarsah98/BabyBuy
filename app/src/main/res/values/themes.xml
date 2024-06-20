@@ -11,4 +11,8 @@
         <item name="windowSplashScreenAnimatedIcon">@mipmap/ic_launcher_logo_4</item>
         <item name="postSplashScreenTheme">@style/Base.Theme.ISMT</item>
     </style>
+    <style name="roundedImageView" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">8dp</item>
+    </style>
 </resources>
