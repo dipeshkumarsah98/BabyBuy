@@ -1,32 +1,53 @@
 package np.com.dipeshsah.ismt.activity
 
 import AppConstants
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import np.com.dipeshsah.ismt.adapters.MyProductAdapter
 import np.com.dipeshsah.ismt.adapters.ProductAdapter
 import np.com.dipeshsah.ismt.databinding.ActivityProductListBinding
+import np.com.dipeshsah.ismt.dto.ActionType
 import np.com.dipeshsah.ismt.dto.ProductListType
 import np.com.dipeshsah.ismt.models.ProductData
 import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
+import np.com.dipeshsah.ismt.utils.SwipeGesture
 
-class ProductListActivity : AppCompatActivity() {
+class ProductListActivity : AppCompatActivity(), ProductAdapter.OnItemClickListener, MyProductAdapter.OnItemClickListener {
     private var TAG = "ProductList"
     private lateinit var binding: ActivityProductListBinding
     private lateinit var productAdapter: ProductAdapter
+    private lateinit var myProductAdapter: MyProductAdapter
     private lateinit var  firebaseDatabase: FirebaseDatabase
     private lateinit var databaseReference: DatabaseReference
     private lateinit var userId: String
 
+    private val updateItemLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val addSuccess = result.data?.getBooleanExtra("addSuccess", false) ?: false
+                val updateSuccess = result.data?.getBooleanExtra("updateSuccess", false) ?: false
+                if (updateSuccess) {
+                    showToast("Product updated successfully!")
+                }else if(addSuccess){
+                    showToast("Product added successfully!")
+                }
+            }
+        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityProductListBinding.inflate(layoutInflater)
@@ -60,6 +81,26 @@ class ProductListActivity : AppCompatActivity() {
          fetchProducts(categoryDetail.category)
        }
 
+        val swipeGesture = object : SwipeGesture(this){
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                when(direction){
+                    ItemTouchHelper.LEFT -> {
+                        Log.i(TAG, "Left swipe")
+                        //val position = viewHolder.adapterPosition
+                        //productAdapter.deleteItem(position)
+                    }
+                    ItemTouchHelper.RIGHT -> {
+                        Log.i(TAG, "Right swipe")
+                        //val position = viewHolder.adapterPosition
+                        //productAdapter.editItem(position)
+                    }
+                }
+            }
+        }
+
+        val itemTouchHelper = ItemTouchHelper(swipeGesture)
+        itemTouchHelper.attachToRecyclerView(binding.rvProductList)
+
         // TODO: Fix refresh button not working bug
         binding.bRefreshButton.setOnClickListener {
             // refreshing page when refresh button is pressed
@@ -79,8 +120,16 @@ class ProductListActivity : AppCompatActivity() {
         getProducts(category) { products ->
             if (products.isNotEmpty()) {
                 binding.rvProductList.layoutManager = LinearLayoutManager(this)
-                productAdapter = ProductAdapter(products)
-                binding.rvProductList.adapter = productAdapter
+
+                if(category == "myProducts") {
+                    myProductAdapter = MyProductAdapter( products)
+                    binding.rvProductList.adapter = myProductAdapter
+                    myProductAdapter.setOnItemClickListener(this)
+                }else{
+                    productAdapter = ProductAdapter(products)
+                    binding.rvProductList.adapter = productAdapter
+                    productAdapter.setOnItemClickListener(this)
+                }
                 handleEmptyProducts(true)
             } else {
                 handleEmptyProducts(false)
@@ -125,8 +174,6 @@ class ProductListActivity : AppCompatActivity() {
              })
 
         }else {
-
-
             val productsReference = databaseReference.child(category)
             productsReference.addListenerForSingleValueEvent(object : ValueEventListener {
                 override fun onDataChange(snapshot: DataSnapshot) {
@@ -165,6 +212,33 @@ class ProductListActivity : AppCompatActivity() {
             binding.rvProductList.visibility = View.GONE
             binding.clNoData.visibility = View.VISIBLE
         }
+    }
+    override fun onProductAddClick(product: ProductData) {
+        showToast("Fill this form to add product to your cart")
+        val intent = Intent(this@ProductListActivity, AddOrUpdateProductActivity::class.java)
+        intent.putExtra("action", ActionType.ADDFROMCATEGORY)
+        intent.putExtra("productId", product.productId)
+        intent.putExtra("category", product.category)
+        startActivity(intent)
+    }
+    override fun onProductDeleteClick(product: ProductData) {
+        showToast("Product deleted from cart")
+    }
+
+    override fun onUpdateClick(product: ProductData) {
+        val intent = Intent(this@ProductListActivity, AddOrUpdateProductActivity::class.java)
+        intent.putExtra("action", ActionType.UPDATE)
+        intent.putExtra("productId", product.productId)
+        updateItemLauncher.launch(intent)
+
+    }
+
+    override fun onPurchaseClick(product: ProductData) {
+        showToast("Product purchased")
+    }
+
+    override fun onDeleteClick(product: ProductData) {
+        showToast("Product deleted")
     }
 
     private fun showToast(message: String) {

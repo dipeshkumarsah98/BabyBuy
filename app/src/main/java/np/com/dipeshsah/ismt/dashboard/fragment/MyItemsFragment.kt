@@ -1,28 +1,48 @@
 package np.com.dipeshsah.ismt.dashboard.fragment
 
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.dialog.MaterialAlertDialogBuilder
+import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
-import np.com.dipeshsah.ismt.adapters.ProductAdapter
+import np.com.dipeshsah.ismt.R
+import np.com.dipeshsah.ismt.activity.AddOrUpdateProductActivity
+import np.com.dipeshsah.ismt.adapters.MyProductAdapter
 import np.com.dipeshsah.ismt.databinding.FragmentMyItemsBinding
+import np.com.dipeshsah.ismt.dto.ActionType
 import np.com.dipeshsah.ismt.models.ProductData
 import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
+import np.com.dipeshsah.ismt.utils.SwipeGesture
 
 
-class MyItemsFragment : Fragment() {
+class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
     private var TAG = "MyItemsFragment"
     private lateinit var userId: String
     private lateinit var binding: FragmentMyItemsBinding
-    private lateinit var productAdapter: ProductAdapter
+    private lateinit var productAdapter: MyProductAdapter
 
+    private val updateItemLauncher =
+        registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+            if (result.resultCode == Activity.RESULT_OK) {
+                val addSuccess = result.data?.getBooleanExtra("updateSuccess", false) ?: false
+                if (addSuccess) {
+                    showSnackbar("Product updated successfully!")
+                }
+            }
+        }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
@@ -41,6 +61,26 @@ class MyItemsFragment : Fragment() {
             fetchMyItems()
         }
 
+        val swipeGesture = object : SwipeGesture(requireContext()){
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                when(direction){
+                    ItemTouchHelper.LEFT -> {
+                        Log.i(TAG, "Left swipe")
+                        val position = viewHolder.adapterPosition
+                        productAdapter.deleteItem(position)
+                    }
+                    ItemTouchHelper.RIGHT -> {
+                        Log.i(TAG, "Right swipe")
+                        val position = viewHolder.adapterPosition
+                        productAdapter.editItem(position)
+                    }
+                }
+            }
+        }
+
+        val itemTouchHelper = ItemTouchHelper(swipeGesture)
+        itemTouchHelper.attachToRecyclerView(binding.rvProductList)
+
         return binding.root
     }
 
@@ -49,8 +89,9 @@ class MyItemsFragment : Fragment() {
         getProductList { products ->
             if(products.isNotEmpty()){
                 binding.rvProductList.layoutManager = LinearLayoutManager(context)
-                productAdapter = ProductAdapter(products)
+                productAdapter = MyProductAdapter(products)
                 binding.rvProductList.adapter = productAdapter
+                productAdapter.setOnItemClickListener(this)
                 handleEmptyProducts(true)
             }else{
                 handleEmptyProducts(false)
@@ -98,5 +139,66 @@ class MyItemsFragment : Fragment() {
             binding.rvProductList.visibility = View.GONE
             binding.clNoData.visibility = View.VISIBLE
         }
+    }
+    override fun onDeleteClick(product: ProductData) {
+        MaterialAlertDialogBuilder(requireContext())
+            .setTitle("Delete Product")
+            .setMessage("Are you sure you want to delete this product?")
+            .setNeutralButton(resources.getString(R.string.cancel)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setNegativeButton(resources.getString(R.string.decline)) { dialog, _ ->
+                dialog.dismiss()
+            }
+            .setPositiveButton(resources.getString(R.string.accept)) { dialog, _ ->
+                deleteProduct(productId = product.productId!!,
+                onSuccess = {
+                    showSnackbar("Product deleted successfully!")
+                    fetchMyItems()
+                },
+                onFailure = {
+                    Log.e(TAG, "Failed to delete product ${it.cause}")
+                    showSnackbar("Something went wrong!")
+                })
+                dialog.dismiss()
+            }
+            .show()
+    }
+    private fun deleteProduct(productId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit){
+        binding.progressBar.visibility = View.VISIBLE
+        FirebaseDatabaseHelper.getDatabaseReference("products")
+            .child(productId)
+            .removeValue()
+            .addOnSuccessListener {
+                onSuccess()
+            }.addOnFailureListener {
+                onFailure(it)
+            }
+    }
+    private fun showSnackbar(message: String) {
+        view?.let {
+            Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
+        }
+    }
+    override fun onUpdateClick(product: ProductData) {
+        val intent = Intent(context, AddOrUpdateProductActivity::class.java)
+        intent.putExtra("action", ActionType.UPDATE)
+        intent.putExtra("productId", product.productId)
+        updateItemLauncher.launch(intent)
+    }
+    override fun onPurchaseClick(product: ProductData) {
+        product.markAsPurchased = !product.markAsPurchased
+        Log.i(TAG, "Purchase button clicked for product: ${product.name}")
+        FirebaseDatabaseHelper.getDatabaseReference("products/${product.productId}")
+            .setValue(product)
+            .addOnCompleteListener { result ->
+                if (result.isSuccessful) {
+                    showSnackbar("Product updated successfully!")
+                    fetchMyItems()
+                } else {
+                    showSnackbar("Something went wrong!")
+                }
+            }
+
     }
 }

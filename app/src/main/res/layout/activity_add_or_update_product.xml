@@ -1,273 +1,278 @@
-<androidx.constraintlayout.widget.ConstraintLayout
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    android:id="@+id/main"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/main"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".activity.AddOrUpdateProductActivity"
     android:background="@drawable/background"
-    >
-<ScrollView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:orientation="vertical"
-    >
+    tools:context=".activity.AddOrUpdateProductActivity">
 
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <com.google.android.material.progressindicator.CircularProgressIndicator
+        android:id="@+id/progressBar"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
+        android:indeterminate="true"
+        android:visibility="gone"
+        app:indicatorColor="@color/primary2"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <ScrollView
+        android:id="@+id/scrollViewWrapper"
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-        <LinearLayout
-            android:id="@+id/ll_addOrUpdateProduct"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="8dp"
-            android:background="@color/primary2"
-            android:paddingHorizontal="8dp"
-            >
-            <ImageButton
-                android:id="@+id/ib_back"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:src="@drawable/baseline_arrow_back_white_24"
-                android:layout_marginRight="4dp"
-                android:layout_gravity="center"
-                style="?attr/materialIconButtonStyle"
-                />
-            <TextView
-                android:id="@+id/tv_title"
-                android:layout_width="match_parent"
-                android:layout_gravity="center"
-                android:layout_height="wrap_content"
-                android:text="Add new item"
-                android:fontFamily="@font/poppins"
-                android:textColor="@color/secondary2"
-                android:textAppearance="?attr/textAppearanceHeadline6"
-                />
-        </LinearLayout>
-        <!-- Product Image with Edit Icon -->
         <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/cl_header"
-            android:layout_width="0dp"
-            android:layout_height="200dp"
-            android:layout_margin="16dp"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/ll_addOrUpdateProduct"
-            app:layout_constraintEnd_toEndOf="parent">
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
 
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:id="@+id/product_image"
-                android:layout_width="220dp"
-                android:layout_height="200dp"
-                android:layout_centerInParent="true"
-                android:clickable="false"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:civ_border_width= "2dp"
-                app:civ_border_color= "@color/primary2"
-                app:layout_constraintTop_toTopOf="parent"
-                app:layout_constraintBottom_toBottomOf="parent"
-                android:layout_gravity="center"
-                android:scaleType="centerCrop"
-                android:src="@drawable/no_image_blue" />
-
-            <de.hdodenhof.circleimageview.CircleImageView
-                android:background="@drawable/circularshape"
-                android:id="@+id/edit_image_icon"
-                android:padding="10dp"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:contentDescription="Pen icon"
-                android:layout_marginRight="8dp"
+            <LinearLayout
+                android:id="@+id/ll_addOrUpdateProduct"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:layout_marginBottom="8dp"
-                app:layout_constraintEnd_toEndOf="@+id/product_image"
-                app:layout_constraintBottom_toBottomOf="@+id/product_image"
-                android:src="@drawable/add_a_image_white_icon"
-                 />
+                android:background="@color/primary2"
+                android:gravity="center"
+                android:orientation="horizontal"
+                android:paddingHorizontal="8dp">
 
-        </androidx.constraintlayout.widget.ConstraintLayout>
-        <!-- Product Name -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/til_product_name_layout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/cl_header"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:hintEnabled="true"
-            android:hint="Product name">
+                <ImageButton
+                    android:id="@+id/ib_back"
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:layout_marginRight="4dp"
+                    android:src="@drawable/baseline_arrow_back_white_24" />
 
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/tiet_product_name"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="text"
-                tools:text="Product Name" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Product Description -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/til_product_description_layout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/til_product_name_layout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:hintEnabled="true"
-            android:hint="Product Description">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/tiet_product_description"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="textMultiLine"
-                tools:text="Product Description" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <!-- Category -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/til_product_category_layout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/til_product_description_layout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:hintEnabled="true"
-            style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
-            android:hint="Select Category"
-            >
-
-            <AutoCompleteTextView
-                android:id="@+id/actv_product_category"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:inputType="none"
-                />
-        </com.google.android.material.textfield.TextInputLayout>
-        <!-- Quantity -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/til_product_quantity_layout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/til_product_category_layout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:hint="Quantity">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/tiet_product_quantity"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number"
-                tools:text="1" />
-        </com.google.android.material.textfield.TextInputLayout>
-        <!-- Price -->
-        <com.google.android.material.textfield.TextInputLayout
-            android:id="@+id/til_product_price_layout"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/til_product_quantity_layout"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            android:hint="Price">
-
-            <com.google.android.material.textfield.TextInputEditText
-                android:id="@+id/tiet_product_price"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:inputType="number"
-                tools:text="Price" />
-        </com.google.android.material.textfield.TextInputLayout>
-
-        <CheckBox
-            android:id="@+id/cb_phurchased"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:checked="true"
-            android:text="Phurchased"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            app:layout_constraintTop_toBottomOf="@id/til_product_price_layout"
-            />
-
-        <LinearLayout
-            android:id="@+id/ll_addLocation"
-            android:layout_width="match_parent"
-            app:layout_constraintTop_toBottomOf="@id/cb_phurchased"
-            android:layout_marginHorizontal="16dp"
-            android:layout_marginTop="8dp"
-            android:orientation="horizontal"
-            android:layout_height="wrap_content">
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/tb_addLocation"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="8dp"
-            android:backgroundTint="@color/primary2"
-            android:textSize="12dp"
-            android:textColor="@color/secondary2"
-            android:fontFamily="@font/poppins"
-            app:icon="@drawable/add_location_24"
-            style="?attr/materialIconButtonStyle"
-            android:text="Add Store location"
-            app:iconTint="@color/secondary2"
-            app:iconPadding="5dp"
-            />
-            <TextView
-                android:id="@+id/tv_locationAddress"
-                android:layout_marginTop="5dp"
-                android:layout_width="wrap_content"
-                android:layout_height="match_parent"
-                android:text="Lat: 445355 \nLong: 345345"
-                android:textAppearance="?attr/textAppearanceBodySmall"
-                android:textColor="@color/darkSlateGray"
-                />
-        </LinearLayout>
-        <androidx.constraintlayout.widget.ConstraintLayout
-            android:id="@+id/ll_buttonGroup"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:backgroundTint="@color/primary2"
-            android:padding="16dp"
-            android:orientation="vertical"
-            app:layout_constraintTop_toBottomOf="@+id/ll_addLocation"
-            >
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/b_delete"
-                app:icon="@drawable/close_icon_24"
-                app:iconTint="@color/lightGray"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Cancel"
-                android:textColor="@color/lightGray"
-                android:backgroundTint="@color/secondary2"
-                />
-
-            <com.google.android.material.button.MaterialButton
-                android:id="@+id/b_submit"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Create"
-                app:icon="@drawable/save_white_icon"
+                <TextView
+                    android:id="@+id/tv_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:fontFamily="@font/poppins"
+                    android:text="Add new item"
+                    android:textAppearance="?attr/textAppearanceHeadline6"
+                    android:textColor="@color/secondary2" />
+            </LinearLayout>
+            <!-- Product Image with Edit Icon -->
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/cl_header"
+                android:layout_width="0dp"
+                android:layout_height="200dp"
+                android:layout_margin="16dp"
                 app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/ll_addOrUpdateProduct">
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/product_image"
+                    android:layout_width="220dp"
+                    android:layout_height="200dp"
+                    android:layout_centerInParent="true"
+                    android:layout_gravity="center"
+                    android:clickable="false"
+                    android:scaleType="centerCrop"
+                    android:src="@drawable/no_image_blue"
+                    app:civ_border_color="@color/primary2"
+                    app:civ_border_width="2dp"
+                    app:layout_constraintBottom_toBottomOf="parent"
+                    app:layout_constraintEnd_toEndOf="parent"
+                    app:layout_constraintStart_toStartOf="parent"
+                    app:layout_constraintTop_toTopOf="parent" />
+
+                <de.hdodenhof.circleimageview.CircleImageView
+                    android:id="@+id/edit_image_icon"
+                    android:layout_width="48dp"
+                    android:layout_height="48dp"
+                    android:layout_marginRight="8dp"
+                    android:layout_marginBottom="8dp"
+                    android:background="@drawable/circularshape"
+                    android:contentDescription="Pen icon"
+                    android:padding="10dp"
+                    android:src="@drawable/add_a_image_white_icon"
+                    app:layout_constraintBottom_toBottomOf="@+id/product_image"
+                    app:layout_constraintEnd_toEndOf="@+id/product_image" />
+
+            </androidx.constraintlayout.widget.ConstraintLayout>
+            <!-- Product Name -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_product_name_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:hint="Product name"
+                app:hintEnabled="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/cl_header">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/tiet_product_name"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="text"
+                    tools:text="Product Name" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Product Description -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_product_description_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:hint="Product Description"
+                app:hintEnabled="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_product_name_layout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/tiet_product_description"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textMultiLine"
+                    tools:text="Product Description" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <!-- Category -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_product_category_layout"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox.ExposedDropdownMenu"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:hint="Select Category"
+                app:hintEnabled="true"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_product_description_layout">
+
+                <AutoCompleteTextView
+                    android:id="@+id/actv_product_category"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:inputType="none" />
+            </com.google.android.material.textfield.TextInputLayout>
+            <!-- Quantity -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_product_quantity_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:hint="Quantity"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_product_category_layout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/tiet_product_quantity"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    tools:text="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+            <!-- Price -->
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/til_product_price_layout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:hint="Price"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toBottomOf="@id/til_product_quantity_layout">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/tiet_product_price"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="number"
+                    tools:text="Price" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <CheckBox
+                android:id="@+id/cb_phurchased"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:checked="true"
+                android:text="Phurchased"
+                app:layout_constraintTop_toBottomOf="@id/til_product_price_layout" />
+
+            <LinearLayout
+                android:id="@+id/ll_addLocation"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginHorizontal="16dp"
+                android:layout_marginTop="8dp"
+                android:orientation="horizontal"
+                app:layout_constraintTop_toBottomOf="@id/cb_phurchased">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/tb_addLocation"
+                    style="?attr/materialIconButtonStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginEnd="8dp"
+                    android:backgroundTint="@color/primary2"
+                    android:fontFamily="@font/poppins"
+                    android:text="Add Store location"
+                    android:textColor="@color/secondary2"
+                    android:textSize="12dp"
+                    app:icon="@drawable/add_location_24"
+                    app:iconPadding="5dp"
+                    app:iconTint="@color/secondary2" />
+
+                <TextView
+                    android:id="@+id/tv_locationAddress"
+                    android:layout_width="wrap_content"
+                    android:layout_height="match_parent"
+                    android:layout_marginTop="5dp"
+                    android:text="Lat: 445355 \nLong: 345345"
+                    android:textAppearance="?attr/textAppearanceBodySmall"
+                    android:textColor="@color/darkSlateGray" />
+            </LinearLayout>
+
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/ll_buttonGroup"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:backgroundTint="@color/primary2"
-                />
+                android:orientation="vertical"
+                android:padding="16dp"
+                app:layout_constraintTop_toBottomOf="@+id/ll_addLocation">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/b_cancel"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/secondary2"
+                    android:text="Cancel"
+                    android:textColor="@color/lightGray"
+                    app:icon="@drawable/close_icon_24"
+                    app:iconTint="@color/lightGray" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/b_submit"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:backgroundTint="@color/primary2"
+                    android:text="Create"
+                    app:icon="@drawable/save_white_icon"
+                    app:layout_constraintEnd_toEndOf="parent" />
+            </androidx.constraintlayout.widget.ConstraintLayout>
         </androidx.constraintlayout.widget.ConstraintLayout>
-    </androidx.constraintlayout.widget.ConstraintLayout>
-</ScrollView>
+    </ScrollView>
 </androidx.constraintlayout.widget.ConstraintLayout>

@@ -10,11 +10,14 @@ import android.os.Bundle
 import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.ImageView
+import android.widget.Toast
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.location.LocationRequestCompat.Quality
+import com.bumptech.glide.Glide
 import np.com.dipeshsah.ismt.R
 import np.com.dipeshsah.ismt.databinding.ActivityAddOrUpdateProductBinding
 import np.com.dipeshsah.ismt.dto.ActionType
@@ -30,10 +33,10 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
     private lateinit var binding: ActivityAddOrUpdateProductBinding
     private var currentAction = ActionType.ADD
     private lateinit var userId: String
-
     private lateinit var imageView: ImageView
     private lateinit var captureImageLauncher: ActivityResultLauncher<Uri>
     private lateinit var pickImageLauncher: ActivityResultLauncher<String>
+    private lateinit var updateProductId: String
     private var currentImageUri: Uri? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -43,8 +46,8 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
 
         setUpActivity()
     }
-
     private fun fetchCategories() {
+        showProgressBar(true)
         FirebaseDatabaseHelper.getDatabaseReference("categories").get().addOnSuccessListener { snapshot ->
             val categories = mutableListOf<String>()
             for(categorySnapshot in snapshot.children){
@@ -53,9 +56,69 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             Log.i(TAG, "Categories: $categories")
             val arrayAdapter = ArrayAdapter(this, R.layout.list_item, categories)
             binding.actvProductCategory.setAdapter(arrayAdapter)
+            showProgressBar(false)
         }.addOnFailureListener {exception ->
             // Handle error
             Log.e(TAG, "Error fetching data", exception)
+            showProgressBar(false)
+        }
+    }
+    private fun fetchParticularProduct(productId: String){
+        showProgressBar(true)
+        FirebaseDatabaseHelper.getDatabaseReference("products/$productId").get().addOnSuccessListener { snapshot ->
+            val productData = snapshot.getValue(ProductData::class.java)
+            productData?.let {
+                binding.tietProductName.setText(it.name)
+                binding.tietProductDescription.setText(it.description)
+                binding.tietProductPrice.setText(it.price.toString())
+                binding.actvProductCategory.setText(it.category)
+                binding.tietProductQuantity.setText(it.quantity.toString())
+                binding.cbPhurchased.isChecked = it.markAsPurchased
+                productData.image.let {
+                    currentImageUri = Uri.parse(it)
+                    Glide.with(this)
+                        .load(it)
+                        .placeholder(R.drawable.user_icon)
+                        .error(R.drawable.ic_baseline_24)
+                        .into(binding.productImage)
+                }
+            }
+            showProgressBar(false)
+        }.addOnFailureListener { exception ->
+            Log.e(TAG, "Error fetching data", exception)
+            showProgressBar(false)
+        }
+    }
+    // This method should be called when user add product from category page
+    private fun fetchProductData(productId: String, category: String) {
+        // first fetch all category then we should check for product with productId
+        showProgressBar(true)
+        FirebaseDatabaseHelper.getDatabaseReference("categories/$category/$productId").get().addOnSuccessListener { snapshot ->
+            val productData = snapshot.getValue(ProductData::class.java)
+            productData?.let {
+                binding.tietProductName.setText(it.name)
+                binding.tietProductDescription.setText(it.description)
+                binding.tietProductPrice.setText(it.price.toString())
+
+                binding.actvProductCategory.setText(it.category)
+                // select particular category from dropdown
+                if(it.quantity == null){
+                    binding.tietProductQuantity.setText("0")
+                }
+                binding.cbPhurchased.isChecked = it.markAsPurchased
+                productData.image.let {
+                    currentImageUri = Uri.parse(it)
+                    Glide.with(this)
+                        .load(it)
+                        .placeholder(R.drawable.user_icon)
+                        .error(R.drawable.ic_baseline_24)
+                        .into(binding.productImage)
+                }
+            }
+            showProgressBar(false)
+        }.addOnFailureListener { exception ->
+            Log.e(TAG, "Error fetching data", exception)
+            showProgressBar(false)
         }
     }
     private fun handleNewProduct() {
@@ -63,13 +126,16 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         val description = binding.tietProductDescription.text.toString()
         val price = binding.tietProductPrice.text.toString()
         val category = binding.actvProductCategory.text.toString()
+        val quality = binding.tietProductQuantity.text.toString()
 
         val isValid = validateForm(
             name,
             description,
             price,
-            category
+            category,
+            quality
         )
+
         if(!isValid){
             return
         }
@@ -77,12 +143,60 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         val productReference = FirebaseDatabaseHelper.getDatabaseReference("products");
         val id = productReference.push().key
         id?.let {
-            // first upload image
-            uploadProfileImage(it)
+            showProgressBar(true)
+            when(currentAction){
+                ActionType.UPDATE -> {
+                    updateProduct(updateProductId)
+                }
+                ActionType.ADDFROMCATEGORY -> {
+                    createProductFromCategory(id)
+                }
+                else -> {
+                    createNewProduct(id)
+                }
+            }
+
         }
+    }
+    private fun updateProduct(productId: String){
+        val productReference = FirebaseDatabaseHelper.getDatabaseReference("products");
+
+        // TODO(Location is missing here)
+        val productData = ProductData(
+            productId = productId,
+            userId = userId,
+            name = binding.tietProductName.text.toString(),
+            category = binding.actvProductCategory.text.toString(),
+            price = binding.tietProductPrice.text.toString().toInt(),
+            image = currentImageUri.toString(),
+            description = binding.tietProductDescription.text.toString(),
+            quantity = binding.tietProductQuantity.text.toString().toInt(),
+            markAsPurchased = binding.cbPhurchased.isActivated,
+            storeLocationLat = 0.0.toString(),
+            storeLocationLng = 0.0.toString()
+        )
+        productReference.child(productId).setValue(productData).addOnSuccessListener {
+            Log.i(TAG, "Item updated successfully ${it.toString()}")
+            val resultIntent = Intent()
+            resultIntent.putExtra("updateSuccess", true)
+            setResult(Activity.RESULT_OK, resultIntent)
+            showProgressBar(false)
+            finish()
+        }.addOnFailureListener { exception ->
+            Log.e(TAG, "Error updating product", exception)
+            showProgressBar(false)
+        }
+    }
+    private fun createProductFromCategory(productId: String){
+        createProduct(productId, currentImageUri.toString())
+    }
+    private fun createNewProduct(productId: String){
+        uploadProfileImage(productId)
     }
     private fun createProduct(productId: String, image: String?) {
         val productReference = FirebaseDatabaseHelper.getDatabaseReference("products");
+
+        // TODO Location is missing here
         val productData = ProductData(
             productId = productId,
             userId = userId,
@@ -90,19 +204,23 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             category = binding.actvProductCategory.text.toString(),
             price = binding.tietProductPrice.text.toString().toInt(),
             image = image,
-            description = binding.tietProductDescription.text.toString()
+            description = binding.tietProductDescription.text.toString(),
+            quantity = binding.tietProductQuantity.text.toString().toInt(),
+            markAsPurchased = binding.cbPhurchased.isActivated,
+            storeLocationLat = 0.0.toString(),
+            storeLocationLng = 0.0.toString()
         )
         productReference.child(productId).setValue(productData).addOnSuccessListener {
-
             Log.i(TAG, "New item created successfully ${it.toString()}")
 
             val resultIntent = Intent()
             resultIntent.putExtra("addSuccess", true)
             setResult(Activity.RESULT_OK, resultIntent)
+            showProgressBar(false)
             finish()
-
         }.addOnFailureListener { exception ->
             Log.e(TAG, "Error creating product", exception)
+            showProgressBar(false)
         }
     }
     private fun uploadProfileImage(productId: String) {
@@ -114,6 +232,7 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                 },
                 onFailure = { exception ->
                     Log.e(TAG, "Error uploading image ${exception.message}")
+                    showProgressBar(false)
                 })
         } ?: run {
             // if no image is selected
@@ -147,8 +266,8 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
 
         }
     }
+    private fun validateForm(email: String, desc: String, price: String, category: String, quality: String): Boolean {
 
-    private fun validateForm(email: String, desc: String, price: String, category: String): Boolean {
         if (email.isEmpty()) {
             validForm(FormKey.NAME, "Name is required")
         }
@@ -157,15 +276,21 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         }
         if (price.isEmpty()) {
             validForm(FormKey.PRICE, "Price is required")
+        }else if(price.toInt() < 1){
+                validForm(FormKey.PRICE, "Price should be greater than 0")
+                Log.i(TAG, "Price is ${price.toInt()}")
         }
         if (category.isEmpty()) {
             validForm(FormKey.CATEGORY, "Category is required")
         }
-        if(price.toInt() <= 0){
-            validForm(FormKey.PRICE, "Price should be greater than 0")
+        if(quality.isEmpty()){
+            validForm(FormKey.QUANTITY, "Quantity is required")
+        } else if(quality.toInt() < 1){
+            validForm(FormKey.QUANTITY, "Quantity should be greater than 0")
+            Log.i(TAG, "Quantity is ${quality.toInt()}")
         }
 
-        return email.isNotEmpty() && desc.isNotEmpty() && price.isNotEmpty() && category.isNotEmpty()
+        return email.isNotEmpty() && desc.isNotEmpty() && price.isNotEmpty() && category.isNotEmpty() && quality.isNotEmpty() && quality.toInt() > 0 && price.toInt() > 0
     }
     private fun validForm(key: FormKey, value: String){
         when (key){
@@ -173,15 +298,20 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             FormKey.DESCRIPTION -> binding.tilProductDescriptionLayout.error = value
             FormKey.PRICE -> binding.tilProductPriceLayout.error = value
             FormKey.CATEGORY -> binding.tilProductCategoryLayout.error = value
+            FormKey.QUANTITY -> binding.tilProductQuantityLayout.error = value
             else -> {}
         }
     }
+    private fun showToast(message: String) {
+        Toast.makeText(this@AddOrUpdateProductActivity, message, Toast.LENGTH_SHORT).show()
+    }
     private fun setUpActivity(): Unit {
         if(intent.hasExtra("action")){
-            currentAction = intent.getStringExtra("action") as ActionType
+            currentAction = intent.getStringExtra("action")!!
+            Log.i(TAG, "Current action: $currentAction")
         }
-        // get userId from SharedPreferences
 
+        // get userId from SharedPreferences
         val sharedPreferences = this@AddOrUpdateProductActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
         userId = sharedPreferences.getString("userId", null).toString()
 
@@ -204,6 +334,28 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
 
         fetchCategories()
 
+        when(currentAction){
+            ActionType.UPDATE -> {
+                val productId = intent.getStringExtra("productId")
+                binding.bSubmit.text = "Update"
+                binding.bSubmit.icon = getDrawable(R.drawable.edit_icon)
+                Log.i(TAG, "Update -> process -> Product id: $productId")
+                if(productId != null){
+                    updateProductId = productId
+                    fetchParticularProduct(productId)
+                }
+            }
+
+            ActionType.ADDFROMCATEGORY -> {
+                val productId = intent.getStringExtra("productId")
+                val category = intent.getStringExtra("category")
+                Log.i(TAG, "Add from category -> process -> Product id: $productId, Category: $category")
+                if(productId != null && category != null){
+                    fetchProductData(productId, category)
+                }
+            }
+        }
+
         binding.bSubmit.setOnClickListener {
             handleNewProduct()
         }
@@ -222,8 +374,20 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         binding.ibBack.setOnClickListener {
             finish()
         }
+        binding.bCancel.setOnClickListener {
+            finish()
+        }
     }
-
+    private fun showProgressBar(isLoading: Boolean) {
+        if(isLoading){
+            binding.progressBar.visibility = android.view.View.VISIBLE
+            binding.scrollViewWrapper.visibility = android.view.View.GONE
+        }else
+        {
+            binding.progressBar.visibility = android.view.View.GONE
+            binding.scrollViewWrapper.visibility = android.view.View.VISIBLE
+        }
+    }
     companion object {
         private val CAMERA_PERMISSION = arrayOf(
             Manifest.permission.CAMERA
