@@ -10,6 +10,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.DefaultItemAnimator
 import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
@@ -63,16 +64,20 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
 
         val swipeGesture = object : SwipeGesture(requireContext()){
             override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
                 when(direction){
                     ItemTouchHelper.LEFT -> {
                         Log.i(TAG, "Left swipe")
-                        val position = viewHolder.adapterPosition
                         productAdapter.deleteItem(position)
+                        binding.rvProductList.adapter?.notifyItemChanged(position)
                     }
                     ItemTouchHelper.RIGHT -> {
                         Log.i(TAG, "Right swipe")
-                        val position = viewHolder.adapterPosition
                         productAdapter.editItem(position)
+                        binding.rvProductList.adapter?.notifyItemChanged(position)
+                    }
+                    else -> {
+                        Log.i(TAG, "Invalid swipe")
                     }
                 }
             }
@@ -80,6 +85,11 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
 
         val itemTouchHelper = ItemTouchHelper(swipeGesture)
         itemTouchHelper.attachToRecyclerView(binding.rvProductList)
+
+        binding.rvProductList.itemAnimator = DefaultItemAnimator().apply {
+            addDuration = 300
+            removeDuration = 300
+        }
 
         return binding.root
     }
@@ -200,5 +210,11 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
                 }
             }
 
+    }
+    override fun onShareClick(product: ProductData) {
+        showSnackbar("Share button clicked for product: ${product.name}")
+    }
+    override fun onLocationClick(product: ProductData) {
+        showSnackbar("Location button clicked for product: ${product.name}")
     }
 }

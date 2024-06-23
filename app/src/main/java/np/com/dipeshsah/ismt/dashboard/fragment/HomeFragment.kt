@@ -10,20 +10,42 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.recyclerview.widget.ItemTouchHelper
 import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.snackbar.Snackbar
+import com.google.firebase.database.DataSnapshot
+import com.google.firebase.database.DatabaseError
+import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.CoroutineStart
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import np.com.dipeshsah.ismt.activity.AddOrUpdateProductActivity
 import np.com.dipeshsah.ismt.activity.ProductListActivity
 import np.com.dipeshsah.ismt.adapters.ProductAdapter
 import np.com.dipeshsah.ismt.databinding.FragmentHomeBinding
+import np.com.dipeshsah.ismt.dto.ActionType
 import np.com.dipeshsah.ismt.dto.Categories
 import np.com.dipeshsah.ismt.dto.ProductListType
 import np.com.dipeshsah.ismt.models.ProductData
+import np.com.dipeshsah.ismt.utils.CategoryProductSwipeGesture
+import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
+import kotlin.coroutines.CoroutineContext
+import kotlin.coroutines.EmptyCoroutineContext
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
-class HomeFragment : Fragment() {
+class HomeFragment : Fragment(), ProductAdapter.OnItemClickListener {
     private var TAG = "HomeFragment"
     private lateinit var binding: FragmentHomeBinding
     private lateinit var productAdapter: ProductAdapter
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
 
     private val addNewItemLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
@@ -44,17 +66,8 @@ class HomeFragment : Fragment() {
         savedInstanceState: Bundle?
     ): View? {
         binding = FragmentHomeBinding.inflate(layoutInflater, container, false);
-        // Inflate the layout for this fragment
 
-        val images =
-            "https://www.homechoice.co.za/file/v1370537154084896159/general/Baby+%26+Kids+-+Tippy+Toes+walker.jpg"
-        val products = listOf(
-            ProductData("1", "ABcd", "Baby", "toys", 100, image = images),
-            ProductData("2", "Xyz", "Baby", "toys", 100, image = images),
-            ProductData("3", "fgh", "Baby", "toys", 100, image =  images)
-        )
-
-        setUpRecycleView(products)
+        fetchSuggestedProducts()
 
         binding.fabAdd.setOnClickListener {
             val createIntent = Intent(context, AddOrUpdateProductActivity::class.java)
@@ -80,6 +93,31 @@ class HomeFragment : Fragment() {
         binding.travelling.setOnClickListener {
             redirectToProductList(Categories.TRAVELLING)
         }
+
+        val swipeGesture = object : CategoryProductSwipeGesture(requireContext()) {
+            override fun onSwiped(viewHolder: RecyclerView.ViewHolder, direction: Int) {
+                val position = viewHolder.bindingAdapterPosition
+                when (direction) {
+                    ItemTouchHelper.LEFT -> {
+                        Log.i(TAG, "Left swipe")
+                        productAdapter.addItem(position)
+                        binding.rvSuggestion.adapter?.notifyItemChanged(position)
+                    }
+
+                    ItemTouchHelper.RIGHT -> {
+                        Log.i(TAG, "Right swipe")
+                        productAdapter.editItem(position)
+                        binding.rvSuggestion.adapter?.notifyItemChanged(position)
+                    }
+                    else -> {
+                        Log.i(TAG, "Invalid swipe")
+                    }
+                }
+            }
+
+        }
+        val itemTouchHelper = ItemTouchHelper(swipeGesture)
+        itemTouchHelper.attachToRecyclerView(binding.rvSuggestion)
         return binding.root
     }
 
@@ -110,9 +148,78 @@ class HomeFragment : Fragment() {
         binding.rvSuggestion.adapter = productAdapter
     }
 
+
+
+    private fun fetchSuggestedProducts(){
+        showProgressBar(true)
+        coroutineScope.launch{
+           try {
+              val products = withContext(Dispatchers.IO) {
+                  fetchAllProducts()
+              }
+               val suggestedProducts = products.shuffled().take(5)
+               if(suggestedProducts.isNotEmpty()){
+                   setUpRecycleView(suggestedProducts)
+               }else{
+                   Log.d(TAG, "No products found or an error occurred.")
+               }
+           }catch (e: Exception){
+               Log.e(TAG, "Error occurred while fetching products: ${e.message}")
+           }finally {
+               showProgressBar(false)
+           }
+        }
+    }
+
+    suspend fun fetchAllProducts(): List<ProductData> {
+        return suspendCoroutine { continuation ->
+            FirebaseDatabaseHelper.getDatabaseReference("categories")
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        val productList = mutableListOf<ProductData>()
+                        for (categorySnapshot in snapshot.children) {
+                            for (productSnapshot in categorySnapshot.children) {
+                                val productId = productSnapshot.key
+                                val productData = productSnapshot.getValue(ProductData::class.java)
+                                productData?.let {
+                                    val completeProductData = it.copy(productId = productId, category = categorySnapshot.key.toString())
+                                    productList.add(completeProductData)
+                                }
+                            }
+                        }
+                        continuation.resume(productList)
+                    }
+
+                    override fun onCancelled(error: DatabaseError) {
+                        continuation.resumeWithException(error.toException())
+                    }
+                })
+        }
+    }
+
     private fun showSnackbar(message: String) {
         view?.let {
             Snackbar.make(it, message, Snackbar.LENGTH_SHORT).show()
         }
+    }
+
+    private fun showProgressBar(isVisible: Boolean) {
+        if (isVisible) {
+            binding.progressBar.visibility = View.VISIBLE
+        } else {
+            binding.progressBar.visibility = View.GONE
+        }
+    }
+
+    override fun onProductDeleteClick(product: ProductData) {
+        showSnackbar("Delete clicked")
+    }
+
+    override fun onProductAddClick(product: ProductData) {
+        val intent = Intent(context, AddOrUpdateProductActivity::class.java)
+        intent.putExtra("action", ActionType.ADDFROMCATEGORY)
+        intent.putExtra("productId", product.productId)
+        intent.putExtra("category", product.category)
+        addNewItemLauncher.launch(intent)
     }
 }

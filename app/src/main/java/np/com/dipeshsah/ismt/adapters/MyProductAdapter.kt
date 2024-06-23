@@ -16,6 +16,8 @@ class MyProductAdapter( private val productList: List<ProductData>) : RecyclerVi
         fun onDeleteClick(product: ProductData)
         fun onUpdateClick(product: ProductData)
         fun onPurchaseClick(product: ProductData)
+        fun onShareClick(product: ProductData)
+        fun onLocationClick(product: ProductData)
     }
 
     private var listener: OnItemClickListener? = null
@@ -55,11 +57,11 @@ class MyProductAdapter( private val productList: List<ProductData>) : RecyclerVi
         holder.purchaseButton.setOnClickListener {
             listener?.onPurchaseClick(product)
         }
-        holder.deleteButton.setOnClickListener {
-            listener?.onDeleteClick(product)
+        holder.locationButton.setOnClickListener {
+            listener?.onLocationClick(product)
         }
-        holder.updateButton.setOnClickListener {
-            listener?.onUpdateClick(product)
+        holder.shareButton.setOnClickListener {
+            listener?.onShareClick(product)
         }
     }
 

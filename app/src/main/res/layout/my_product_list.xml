@@ -100,18 +100,7 @@
                     android:layout_height="wrap_content"
                     app:layout_constraintEnd_toEndOf="parent"
                     >
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/tb_editNow"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:backgroundTint="@color/primary2"
-                        android:textSize="12dp"
-                        android:textColor="@color/secondary2"
-                        android:fontFamily="@font/poppins"
-                        app:icon="@drawable/edit_icon"
-                        style="?attr/materialIconButtonStyle"
-                        app:iconTint="@color/secondary2"
-                        />
+
                     <com.google.android.material.button.MaterialButton
                         android:id="@+id/tb_purchaseNow"
                         android:layout_width="wrap_content"
@@ -125,15 +114,27 @@
                         app:iconTint="@color/secondary2"
                         />
                     <com.google.android.material.button.MaterialButton
-                        android:id="@+id/tb_deleteNow"
+                        android:id="@+id/tb_shareNow"
                         android:textColor="@color/secondary2"
                         android:layout_width="wrap_content"
-                        app:icon="@drawable/delete_icon"
+                        app:icon="@drawable/share_icon"
                         android:layout_height="wrap_content"
-                        android:backgroundTint="@color/softCoral"
+                        android:backgroundTint="@color/lightGray"
                         android:fontFamily="@font/poppins"
                         style="?attr/materialIconButtonStyle"
                         app:iconTint="@color/secondary2"
+                        />
+                    <com.google.android.material.button.MaterialButton
+                        android:id="@+id/tb_addLocation"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:backgroundTint="@color/secondary2"
+                        android:textSize="12dp"
+                        android:textColor="@color/secondary2"
+                        android:fontFamily="@font/poppins"
+                        app:icon="@drawable/add_location_24"
+                        style="?attr/materialIconButtonStyle"
+                        app:iconTint="@color/lightGray"
                         />
                 </LinearLayout>
             </androidx.constraintlayout.widget.ConstraintLayout>

@@ -44,6 +44,14 @@ class ProductAdapter(private val productList: List<ProductData>) : RecyclerView.
         }
     }
 
+    fun addItem(position: Int) {
+        listener?.onProductAddClick(productList[position])
+    }
+
+    fun editItem(position: Int) {
+        listener?.onProductDeleteClick(productList[position])
+    }
+
     override fun getItemCount(): Int {
         return productList.size
     }

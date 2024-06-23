@@ -14,6 +14,6 @@ class MyProductViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
     val cardView: ConstraintLayout = itemView.findViewById(R.id.card)
     val productQuantity: TextView = itemView.findViewById(R.id.tv_quanity)
     val purchaseButton: Button = itemView.findViewById(R.id.tb_purchaseNow)
-    val deleteButton: Button = itemView.findViewById(R.id.tb_deleteNow)
-    val updateButton: Button = itemView.findViewById(R.id.tb_editNow)
+    val locationButton: Button = itemView.findViewById(R.id.tb_addLocation)
+    val shareButton: Button = itemView.findViewById(R.id.tb_shareNow)
 }
