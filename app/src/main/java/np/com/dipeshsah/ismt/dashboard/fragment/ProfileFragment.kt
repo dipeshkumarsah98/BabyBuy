@@ -16,17 +16,27 @@ import com.google.android.material.snackbar.Snackbar
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import np.com.dipeshsah.ismt.LoginActivity
 import np.com.dipeshsah.ismt.R
 import np.com.dipeshsah.ismt.activity.UpdateProfileActivity
 import np.com.dipeshsah.ismt.databinding.FragmentProfileBinding
 import np.com.dipeshsah.ismt.models.UserData
 import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 
 class ProfileFragment : Fragment() {
     private var TAG = "ProfileFragment"
     private  lateinit var binding: FragmentProfileBinding
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
 
     private val updateProfileLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
         if (result.resultCode == Activity.RESULT_OK) {
@@ -59,14 +69,12 @@ class ProfileFragment : Fragment() {
             val profileUpdateIntent = Intent(activity, UpdateProfileActivity::class.java)
             profileUpdateIntent.putExtra("userId", userId)
            updateProfileLauncher.launch(profileUpdateIntent)
-
         }
 
         binding.bLogout.setOnClickListener {
             showLogoutDialog(requireContext())
 
         }
-
 
         return binding.root
     }
@@ -96,64 +104,88 @@ class ProfileFragment : Fragment() {
     }
 
     private fun logoutUser() {
-        val sharedPreference = activity?.getSharedPreferences("app", 0)
-        // remove the userId from the storage
-        sharedPreference?.edit()?.remove("userId")?.apply()
-        sharedPreference?.edit()?.remove("isLoggedIn")?.apply()
-        sharedPreference?.edit()?.remove("userEmail")?.apply()
+        coroutineScope.launch {
+           withContext(Dispatchers.IO) {
+               val sharedPreference = activity?.getSharedPreferences("app", 0)
+               sharedPreference?.edit()?.apply {
+                   remove("userId")
+                   remove("isLoggedIn")
+                   remove("userEmail")
+                   apply()
+               }
+           }
+            withContext(Dispatchers.Main) {
+                showSnackbar("Logged out successfully!")
+                startActivity(Intent(activity, LoginActivity::class.java))
+            }
+        }
+    }
 
-        // navigate to login activity
-        startActivity(Intent(activity, LoginActivity::class.java))
+    private suspend fun fetchUserData(userId: String) : UserData? {
+        return suspendCoroutine { continuation ->
+           val databaseReference = FirebaseDatabaseHelper.getDatabaseReference("users/$userId")
+           databaseReference.addListenerForSingleValueEvent(object: ValueEventListener {
+               override fun onDataChange(snapshot: DataSnapshot) {
+                   val user = snapshot.getValue(UserData::class.java)
+                   continuation.resume(user)
+               }
+
+               override fun onCancelled(error: DatabaseError) {
+                     continuation.resumeWithException(error.toException())
+               }
+           })
+        }
+
     }
 
 
     private fun getUserData(userId: String) {
-        showProgressBar(true)
-        val databaseReference = FirebaseDatabaseHelper.getDatabaseReference("users/$userId")
-        databaseReference.addValueEventListener(object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                val user = snapshot.getValue(UserData::class.java)
-                Log.e(TAG, "UserResponse: $user")
-                binding.tvNameFieldValue.text = user?.name
-                binding.tvProfileName.text = user?.name
+        coroutineScope.launch {
+            showProgressBar(true)
+            try {
+                val user = withContext(Dispatchers.IO) {
+                    fetchUserData(userId)
+                }
+                user?.let {
+                    Log.e(TAG, "UserResponse: $user")
+                    binding.tvNameFieldValue.text = user.name
+                    binding.tvProfileName.text = user.name
 
-                binding.tvEmailFieldValue.text = user?.email
-                binding.tvProfileEmail.text = user?.email
+                    binding.tvEmailFieldValue.text = user.email
+                    binding.tvProfileEmail.text = user.email
 
-                binding.tvGenderFieldValue.text = user?.gender
+                    binding.tvGenderFieldValue.text = user.gender
 
-                // show no of start as same of password length
-                binding.tvPasswordFieldValue.text = "*".repeat(user?.password?.length ?: 0)
-
-                user?.profileImage?.let {
-                    // If user has profile pic
-                    Glide.with(this@ProfileFragment)
-                    .load(user.profileImage)
-                    .placeholder(R.drawable.user_icon)
-                    .error(R.drawable.logo)
-                    .into(binding.ivProfilePic)
-                } ?: run{
-                    // show default profile pic
-                    when (user?.gender) {
-                        "Male" -> {
-                            binding.ivProfilePic.setImageResource(R.drawable.maleprofile)
-                        }
-                        "Female" -> {
-                            binding.ivProfilePic.setImageResource(R.drawable.femaleprofile)
-                        }
-                        else -> {
-                            binding.ivProfilePic.setImageResource(R.drawable.user_icon)
+                    // show no of start as same of password length
+                    binding.tvPasswordFieldValue.text = "*".repeat(user.password?.length ?: 0)
+                    user.profileImage?.let {
+                        // If user has profile pic
+                        Glide.with(this@ProfileFragment)
+                            .load(user.profileImage)
+                            .placeholder(R.drawable.user_icon)
+                            .error(R.drawable.maleprofile)
+                            .into(binding.ivProfilePic)
+                    } ?: run{
+                        when (user.gender) {
+                            "Male" -> {
+                                binding.ivProfilePic.setImageResource(R.drawable.maleprofile)
+                            }
+                            "Female" -> {
+                                binding.ivProfilePic.setImageResource(R.drawable.femaleprofile)
+                            }
+                            else -> {
+                                binding.ivProfilePic.setImageResource(R.drawable.user_icon)
+                            }
                         }
                     }
                 }
-
+            }catch (e: Exception) {
+                Log.e(TAG, "getUserData: ${e.message}")
+                showProgressBar(false)
+            }finally {
                 showProgressBar(false)
             }
-            override fun onCancelled(error: DatabaseError) {
-                Log.e(TAG, "onCancelled: ${error.message}")
-                showProgressBar(false)
-            }
-        })
+        }
     }
    // logic to show progress bar
     private fun showProgressBar(isLoading: Boolean) {
@@ -169,6 +201,11 @@ class ProfileFragment : Fragment() {
             binding.llBody.visibility = View.GONE
             binding.llButtonGroup.visibility = View.GONE
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 
 }

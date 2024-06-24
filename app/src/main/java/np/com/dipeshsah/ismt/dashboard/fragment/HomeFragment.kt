@@ -171,7 +171,7 @@ class HomeFragment : Fragment(), ProductAdapter.OnItemClickListener {
         }
     }
 
-    suspend fun fetchAllProducts(): List<ProductData> {
+    private suspend fun fetchAllProducts(): List<ProductData> {
         return suspendCoroutine { continuation ->
             FirebaseDatabaseHelper.getDatabaseReference("categories")
                 .addListenerForSingleValueEvent(object : ValueEventListener {
@@ -221,5 +221,10 @@ class HomeFragment : Fragment(), ProductAdapter.OnItemClickListener {
         intent.putExtra("productId", product.productId)
         intent.putExtra("category", product.category)
         addNewItemLauncher.launch(intent)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }

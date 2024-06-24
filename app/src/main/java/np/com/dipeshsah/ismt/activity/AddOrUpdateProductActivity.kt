@@ -16,8 +16,13 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.core.location.LocationRequestCompat.Quality
 import com.bumptech.glide.Glide
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.coroutineScope
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import np.com.dipeshsah.ismt.R
 import np.com.dipeshsah.ismt.databinding.ActivityAddOrUpdateProductBinding
 import np.com.dipeshsah.ismt.dto.ActionType
@@ -25,8 +30,10 @@ import np.com.dipeshsah.ismt.dto.FormKey
 import np.com.dipeshsah.ismt.models.ProductData
 import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
 import np.com.dipeshsah.ismt.utils.FirebaseStorageHelper
+import np.com.dipeshsah.ismt.utils.await
 import np.com.dipeshsah.ismt.utils.createImageFile
 import np.com.dipeshsah.ismt.utils.getUriForFile
+import kotlin.coroutines.suspendCoroutine
 
 class AddOrUpdateProductActivity : AppCompatActivity() {
     private var TAG = "AddOrUpdateProduct"
@@ -38,89 +45,112 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
     private lateinit var pickImageLauncher: ActivityResultLauncher<String>
     private lateinit var updateProductId: String
     private var currentImageUri: Uri? = null
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAddOrUpdateProductBinding.inflate(layoutInflater)
         setContentView(binding.root)
-
         setUpActivity()
     }
+
     private fun fetchCategories() {
-        showProgressBar(true)
-        FirebaseDatabaseHelper.getDatabaseReference("categories").get().addOnSuccessListener { snapshot ->
-            val categories = mutableListOf<String>()
-            for(categorySnapshot in snapshot.children){
-                categorySnapshot.key?.let { categories.add(it) }
-            }
-            Log.i(TAG, "Categories: $categories")
-            val arrayAdapter = ArrayAdapter(this, R.layout.list_item, categories)
-            binding.actvProductCategory.setAdapter(arrayAdapter)
-            showProgressBar(false)
-        }.addOnFailureListener {exception ->
-            // Handle error
-            Log.e(TAG, "Error fetching data", exception)
-            showProgressBar(false)
-        }
-    }
-    private fun fetchParticularProduct(productId: String){
-        showProgressBar(true)
-        FirebaseDatabaseHelper.getDatabaseReference("products/$productId").get().addOnSuccessListener { snapshot ->
-            val productData = snapshot.getValue(ProductData::class.java)
-            productData?.let {
-                binding.tietProductName.setText(it.name)
-                binding.tietProductDescription.setText(it.description)
-                binding.tietProductPrice.setText(it.price.toString())
-                binding.actvProductCategory.setText(it.category)
-                binding.tietProductQuantity.setText(it.quantity.toString())
-                binding.cbPhurchased.isChecked = it.markAsPurchased
-                productData.image.let {
-                    currentImageUri = Uri.parse(it)
-                    Glide.with(this)
-                        .load(it)
-                        .placeholder(R.drawable.user_icon)
-                        .error(R.drawable.ic_baseline_24)
-                        .into(binding.productImage)
+        coroutineScope.launch {
+            showProgressBar(true)
+            try {
+                val categories = withContext(Dispatchers.IO) {
+                    FirebaseDatabaseHelper.getDatabaseReference("categories")
+                        .get()
+                        .await()
+                        .children
+                        .mapNotNull { it.key }
                 }
+                Log.i(TAG, "Categories: $categories")
+                val arrayAdapter = ArrayAdapter(this@AddOrUpdateProductActivity, R.layout.list_item, categories)
+                binding.actvProductCategory.setAdapter(arrayAdapter)
+                showProgressBar(false)
+            }catch (exception: Exception) {
+                Log.e(TAG, "Error fetching data", exception)
+                showProgressBar(false)
             }
-            showProgressBar(false)
-        }.addOnFailureListener { exception ->
-            Log.e(TAG, "Error fetching data", exception)
-            showProgressBar(false)
         }
     }
+
+    private fun fetchParticularProduct(productId: String) {
+        coroutineScope.launch {
+            showProgressBar(true)
+            try {
+                val productData = withContext(Dispatchers.IO) {
+                    FirebaseDatabaseHelper.getDatabaseReference("products/$productId")
+                        .get()
+                        .await()
+                        .getValue(ProductData::class.java)
+                }
+                productData?.let {
+                    binding.tietProductName.setText(it.name)
+                    binding.tietProductDescription.setText(it.description)
+                    binding.tietProductPrice.setText(it.price.toString())
+                    binding.actvProductCategory.setText(it.category)
+                    binding.tietProductQuantity.setText(it.quantity.toString())
+                    binding.cbPhurchased.isChecked = it.markAsPurchased
+                    productData.image.let {
+                        currentImageUri = Uri.parse(it)
+                        Glide.with(this@AddOrUpdateProductActivity)
+                            .load(it)
+                            .placeholder(R.drawable.user_icon)
+                            .error(R.drawable.ic_baseline_24)
+                            .into(binding.productImage)
+                    }
+                }
+                showProgressBar(false)
+            } catch (exception: Exception) {
+                Log.e(TAG, "Error fetching data", exception)
+                showProgressBar(false)
+            }
+        }
+    }
+
     // This method should be called when user add product from category page
     private fun fetchProductData(productId: String, category: String) {
-        // first fetch all category then we should check for product with productId
-        showProgressBar(true)
-        FirebaseDatabaseHelper.getDatabaseReference("categories/$category/$productId").get().addOnSuccessListener { snapshot ->
-            val productData = snapshot.getValue(ProductData::class.java)
-            productData?.let {
-                binding.tietProductName.setText(it.name)
-                binding.tietProductDescription.setText(it.description)
-                binding.tietProductPrice.setText(it.price.toString())
+        coroutineScope.launch {
+            showProgressBar(true)
+            try {
+                val productData = withContext(Dispatchers.IO) {
+                    FirebaseDatabaseHelper.getDatabaseReference("categories/$category/$productId")
+                        .get()
+                        .await()
+                        .getValue(ProductData::class.java)
+                }
+                productData?.let {
+                    binding.tietProductName.setText(it.name)
+                    binding.tietProductDescription.setText(it.description)
+                    binding.tietProductPrice.setText(it.price.toString())
+                    binding.actvProductCategory.setText(it.category)
 
-                binding.actvProductCategory.setText(it.category)
-                // select particular category from dropdown
-                if(it.quantity == null){
-                    binding.tietProductQuantity.setText("0")
+                    // select particular category from dropdown
+                    if (it.quantity == null) {
+                        binding.tietProductQuantity.setText("0")
+                    }
+                    binding.cbPhurchased.isChecked = it.markAsPurchased
+                    productData.image.let {
+                        currentImageUri = Uri.parse(it)
+                        Glide.with(this@AddOrUpdateProductActivity)
+                            .load(it)
+                            .placeholder(R.drawable.user_icon)
+                            .error(R.drawable.ic_baseline_24)
+                            .into(binding.productImage)
+                    }
+                    showProgressBar(false)
                 }
-                binding.cbPhurchased.isChecked = it.markAsPurchased
-                productData.image.let {
-                    currentImageUri = Uri.parse(it)
-                    Glide.with(this)
-                        .load(it)
-                        .placeholder(R.drawable.user_icon)
-                        .error(R.drawable.ic_baseline_24)
-                        .into(binding.productImage)
-                }
+            }catch (exception: Exception) {
+                Log.e(TAG, "Error fetching data", exception)
+                showProgressBar(false)
             }
-            showProgressBar(false)
-        }.addOnFailureListener { exception ->
-            Log.e(TAG, "Error fetching data", exception)
-            showProgressBar(false)
+
         }
     }
+
     private fun handleNewProduct() {
         val name = binding.tietProductName.text.toString()
         val description = binding.tietProductDescription.text.toString()
@@ -136,7 +166,7 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             quality
         )
 
-        if(!isValid){
+        if (!isValid) {
             return
         }
 
@@ -144,13 +174,15 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         val id = productReference.push().key
         id?.let {
             showProgressBar(true)
-            when(currentAction){
+            when (currentAction) {
                 ActionType.UPDATE -> {
                     updateProduct(updateProductId)
                 }
+
                 ActionType.ADDFROMCATEGORY -> {
                     createProductFromCategory(id)
                 }
+
                 else -> {
                     createNewProduct(id)
                 }
@@ -158,95 +190,111 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
 
         }
     }
-    private fun updateProduct(productId: String){
-        val productReference = FirebaseDatabaseHelper.getDatabaseReference("products");
 
-        // TODO(Location is missing here)
-        val productData = ProductData(
-            productId = productId,
-            userId = userId,
-            name = binding.tietProductName.text.toString(),
-            category = binding.actvProductCategory.text.toString(),
-            price = binding.tietProductPrice.text.toString().toInt(),
-            image = currentImageUri.toString(),
-            description = binding.tietProductDescription.text.toString(),
-            quantity = binding.tietProductQuantity.text.toString().toInt(),
-            markAsPurchased = binding.cbPhurchased.isActivated,
-            storeLocationLat = 0.0.toString(),
-            storeLocationLng = 0.0.toString()
-        )
-        productReference.child(productId).setValue(productData).addOnSuccessListener {
-            Log.i(TAG, "Item updated successfully ${it.toString()}")
-            val resultIntent = Intent()
-            resultIntent.putExtra("updateSuccess", true)
-            setResult(Activity.RESULT_OK, resultIntent)
-            showProgressBar(false)
-            finish()
-        }.addOnFailureListener { exception ->
-            Log.e(TAG, "Error updating product", exception)
-            showProgressBar(false)
+    private fun updateProduct(productId: String) {
+        coroutineScope.launch {
+            try {
+                showProgressBar(true)
+                val productData = ProductData(
+                    productId = productId,
+                    userId = userId,
+                    name = binding.tietProductName.text.toString(),
+                    category = binding.actvProductCategory.text.toString(),
+                    price = binding.tietProductPrice.text.toString().toInt(),
+                    image = currentImageUri.toString(),
+                    description = binding.tietProductDescription.text.toString(),
+                    quantity = binding.tietProductQuantity.text.toString().toInt(),
+                    markAsPurchased = binding.cbPhurchased.isActivated,
+                    storeLocationLat = 0.0.toString(),
+                    storeLocationLng = 0.0.toString()
+                )
+                withContext(Dispatchers.IO) {
+                    FirebaseDatabaseHelper.createProduct(productId, productData)
+                }
+                Log.i(TAG, "Item updated successfully!")
+                val resultIntent = Intent()
+                resultIntent.putExtra("updateSuccess", true)
+                setResult(Activity.RESULT_OK, resultIntent)
+                showProgressBar(false)
+                finish()
+            } catch (exception: Exception) {
+                Log.e(TAG, "Error updating product", exception)
+                showProgressBar(false)
+            }
         }
     }
-    private fun createProductFromCategory(productId: String){
+
+    private fun createProductFromCategory(productId: String) {
+        // TODO missing logic to update quantity
+        // since we are adding product from category page,
+        // there might be case when user had already that select
+        // product in his own item, so we have to check for and increase quantity
         createProduct(productId, currentImageUri.toString())
     }
-    private fun createNewProduct(productId: String){
+
+    private fun createNewProduct(productId: String) {
         uploadProfileImage(productId)
     }
+
     private fun createProduct(productId: String, image: String?) {
-        val productReference = FirebaseDatabaseHelper.getDatabaseReference("products");
-
-        // TODO Location is missing here
-        val productData = ProductData(
-            productId = productId,
-            userId = userId,
-            name = binding.tietProductName.text.toString(),
-            category = binding.actvProductCategory.text.toString(),
-            price = binding.tietProductPrice.text.toString().toInt(),
-            image = image,
-            description = binding.tietProductDescription.text.toString(),
-            quantity = binding.tietProductQuantity.text.toString().toInt(),
-            markAsPurchased = binding.cbPhurchased.isActivated,
-            storeLocationLat = 0.0.toString(),
-            storeLocationLng = 0.0.toString()
-        )
-        productReference.child(productId).setValue(productData).addOnSuccessListener {
-            Log.i(TAG, "New item created successfully ${it.toString()}")
-
-            val resultIntent = Intent()
-            resultIntent.putExtra("addSuccess", true)
-            setResult(Activity.RESULT_OK, resultIntent)
-            showProgressBar(false)
-            finish()
-        }.addOnFailureListener { exception ->
-            Log.e(TAG, "Error creating product", exception)
-            showProgressBar(false)
+        coroutineScope.launch {
+            showProgressBar(true);
+            try {
+                val productData = ProductData(
+                    productId = productId,
+                    userId = userId,
+                    name = binding.tietProductName.text.toString(),
+                    category = binding.actvProductCategory.text.toString(),
+                    price = binding.tietProductPrice.text.toString().toInt(),
+                    image = image,
+                    description = binding.tietProductDescription.text.toString(),
+                    quantity = binding.tietProductQuantity.text.toString().toInt(),
+                    markAsPurchased = binding.cbPhurchased.isActivated,
+                    storeLocationLat = 0.0.toString(),
+                    storeLocationLng = 0.0.toString()
+                )
+                withContext(Dispatchers.IO) {
+                    FirebaseDatabaseHelper.createProduct(productId, productData)
+                }
+                Log.i(TAG, "Item added successfully")
+                val resultIntent = Intent()
+                resultIntent.putExtra("addSuccess", true)
+                setResult(Activity.RESULT_OK, resultIntent)
+                showProgressBar(false)
+                finish()
+            } catch (exception: Exception) {
+                Log.e(TAG, "Error creating product", exception)
+                showProgressBar(false)
+            }
         }
     }
+
     private fun uploadProfileImage(productId: String) {
         currentImageUri?.let {
-            FirebaseStorageHelper.uploadImage(it, "product/${userId}-${productId}.jpg",
-                onSuccess = { imageUrl ->
-                    Log.i(TAG, "Image uploaded successfully $it")
-                    createProduct(productId, imageUrl)
-                },
-                onFailure = { exception ->
-                    Log.e(TAG, "Error uploading image ${exception.message}")
-                    showProgressBar(false)
-                })
+            coroutineScope.launch {
+                val url = withContext(Dispatchers.IO) {
+                    FirebaseStorageHelper.uploadImage(it, "product/${userId}-${productId}.jpg")
+                }
+                Log.i(TAG, "The image is uploaded successfully: $url")
+
+                createProduct(productId, url.toString())
+            }
         } ?: run {
             // if no image is selected
             createProduct(productId, null);
         }
     }
+
     private fun captureImage() {
         val imageFile = createImageFile(this)
         currentImageUri = getUriForFile(this, imageFile)
         captureImageLauncher.launch(currentImageUri)
     }
+
     private fun pickImageFromGallery() {
         pickImageLauncher.launch("image/*")
     }
+
     private fun requestCameraPermission() {
         if (hasCameraPermission()) {
             captureImage()
@@ -257,6 +305,7 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             requestPermissions(AddOrUpdateProductActivity.CAMERA_PERMISSION, 0)
         }
     }
+
     private fun hasCameraPermission(): Boolean {
         return AddOrUpdateProductActivity.CAMERA_PERMISSION.all {
             ContextCompat.checkSelfPermission(
@@ -266,7 +315,14 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
 
         }
     }
-    private fun validateForm(email: String, desc: String, price: String, category: String, quality: String): Boolean {
+
+    private fun validateForm(
+        email: String,
+        desc: String,
+        price: String,
+        category: String,
+        quality: String
+    ): Boolean {
 
         if (email.isEmpty()) {
             validForm(FormKey.NAME, "Name is required")
@@ -276,24 +332,25 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         }
         if (price.isEmpty()) {
             validForm(FormKey.PRICE, "Price is required")
-        }else if(price.toInt() < 1){
-                validForm(FormKey.PRICE, "Price should be greater than 0")
-                Log.i(TAG, "Price is ${price.toInt()}")
+        } else if (price.toInt() < 1) {
+            validForm(FormKey.PRICE, "Price should be greater than 0")
+            Log.i(TAG, "Price is ${price.toInt()}")
         }
         if (category.isEmpty()) {
             validForm(FormKey.CATEGORY, "Category is required")
         }
-        if(quality.isEmpty()){
+        if (quality.isEmpty()) {
             validForm(FormKey.QUANTITY, "Quantity is required")
-        } else if(quality.toInt() < 1){
+        } else if (quality.toInt() < 1) {
             validForm(FormKey.QUANTITY, "Quantity should be greater than 0")
             Log.i(TAG, "Quantity is ${quality.toInt()}")
         }
 
         return email.isNotEmpty() && desc.isNotEmpty() && price.isNotEmpty() && category.isNotEmpty() && quality.isNotEmpty() && quality.toInt() > 0 && price.toInt() > 0
     }
-    private fun validForm(key: FormKey, value: String){
-        when (key){
+
+    private fun validForm(key: FormKey, value: String) {
+        when (key) {
             FormKey.NAME -> binding.tilProductNameLayout.error = value
             FormKey.DESCRIPTION -> binding.tilProductDescriptionLayout.error = value
             FormKey.PRICE -> binding.tilProductPriceLayout.error = value
@@ -302,17 +359,20 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             else -> {}
         }
     }
+
     private fun showToast(message: String) {
         Toast.makeText(this@AddOrUpdateProductActivity, message, Toast.LENGTH_SHORT).show()
     }
+
     private fun setUpActivity(): Unit {
-        if(intent.hasExtra("action")){
+        if (intent.hasExtra("action")) {
             currentAction = intent.getStringExtra("action")!!
             Log.i(TAG, "Current action: $currentAction")
         }
 
         // get userId from SharedPreferences
-        val sharedPreferences = this@AddOrUpdateProductActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
+        val sharedPreferences =
+            this@AddOrUpdateProductActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
         userId = sharedPreferences.getString("userId", null).toString()
 
         imageView = binding.productImage
@@ -334,13 +394,13 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
 
         fetchCategories()
 
-        when(currentAction){
+        when (currentAction) {
             ActionType.UPDATE -> {
                 val productId = intent.getStringExtra("productId")
                 binding.bSubmit.text = "Update"
                 binding.bSubmit.icon = getDrawable(R.drawable.edit_icon)
                 Log.i(TAG, "Update -> process -> Product id: $productId")
-                if(productId != null){
+                if (productId != null) {
                     updateProductId = productId
                     fetchParticularProduct(productId)
                 }
@@ -349,8 +409,11 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             ActionType.ADDFROMCATEGORY -> {
                 val productId = intent.getStringExtra("productId")
                 val category = intent.getStringExtra("category")
-                Log.i(TAG, "Add from category -> process -> Product id: $productId, Category: $category")
-                if(productId != null && category != null){
+                Log.i(
+                    TAG,
+                    "Add from category -> process -> Product id: $productId, Category: $category"
+                )
+                if (productId != null && category != null) {
                     fetchProductData(productId, category)
                 }
             }
@@ -378,19 +441,25 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
             finish()
         }
     }
+
     private fun showProgressBar(isLoading: Boolean) {
-        if(isLoading){
+        if (isLoading) {
             binding.progressBar.visibility = android.view.View.VISIBLE
             binding.scrollViewWrapper.visibility = android.view.View.GONE
-        }else
-        {
+        } else {
             binding.progressBar.visibility = android.view.View.GONE
             binding.scrollViewWrapper.visibility = android.view.View.VISIBLE
         }
     }
+
     companion object {
         private val CAMERA_PERMISSION = arrayOf(
             Manifest.permission.CAMERA
         )
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }

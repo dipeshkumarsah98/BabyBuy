@@ -20,6 +20,11 @@ import com.bumptech.glide.Glide
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import np.com.dipeshsah.ismt.R
 import np.com.dipeshsah.ismt.databinding.ActivityUpdateProfileBinding
 import np.com.dipeshsah.ismt.dto.FormKey
@@ -40,6 +45,8 @@ class UpdateProfileActivity : AppCompatActivity() {
     private lateinit var captureImageLauncher: ActivityResultLauncher<Uri>
     private lateinit var pickImageLauncher: ActivityResultLauncher<String>
     private var currentImageUri: Uri? = null
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -171,14 +178,16 @@ class UpdateProfileActivity : AppCompatActivity() {
 
     private fun uploadProfileImage() {
         currentImageUri?.let {
-            FirebaseStorageHelper.uploadImage(it, "profile/${userId}.jpg",
-                onSuccess = { imageUrl ->
-                    Log.i(TAG, "Image uploaded successfully $it")
-                    updateUser(imageUrl)
-                },
-                onFailure = { exception ->
-                    Log.e(TAG, "Error uploading image ${exception.message}")
-                })
+            coroutineScope.launch {
+                try {
+                    val url = withContext(Dispatchers.IO){
+                        FirebaseStorageHelper.uploadImage(it, "profile/${userId}.jpg")
+                    }
+                    updateUser(url.toString())
+                }catch (e: Exception) {
+                    Log.e(TAG, "Error uploading image", e)
+                }
+            }
         } ?: run {
             updateUser(null);
         }

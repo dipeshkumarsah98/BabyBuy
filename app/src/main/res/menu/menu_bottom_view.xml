@@ -14,12 +14,6 @@
         android:title="My Items"
         />
     <item
-        android:id="@+id/suggestions"
-        android:enabled="true"
-        android:icon="@drawable/ic_home_24"
-        android:title="Suggestions"
-        />
-    <item
     android:id="@+id/profile"
         android:enabled="true"
         android:icon="@drawable/user_icon"
