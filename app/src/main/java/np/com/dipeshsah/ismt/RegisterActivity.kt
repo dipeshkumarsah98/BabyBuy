@@ -3,6 +3,7 @@ package np.com.dipeshsah.ismt
 import android.content.Intent
 import android.os.Bundle
 import android.util.Log
+import android.view.View
 import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -11,16 +12,27 @@ import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import np.com.dipeshsah.ismt.databinding.ActivityRegisterBinding
 import np.com.dipeshsah.ismt.dto.FormKey
 import np.com.dipeshsah.ismt.models.UserData
+import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 
 class RegisterActivity : AppCompatActivity() {
+    private var TAG = "Register"
     private lateinit var binding:ActivityRegisterBinding
     private lateinit var  firebaseDatabase: FirebaseDatabase
     private lateinit var databaseReference: DatabaseReference
-    private var TAG = "Register"
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -37,7 +49,6 @@ class RegisterActivity : AppCompatActivity() {
         val arrayAdapter = ArrayAdapter(this, R.layout.list_item,items)
         binding.actvGender.setAdapter(arrayAdapter)
 
-        // Click handler For Sign up button
         binding.bSubmit.setOnClickListener{
             val email = binding.tielEmail.text.toString()
             val password = binding.tietPassword.text.toString()
@@ -80,67 +91,80 @@ class RegisterActivity : AppCompatActivity() {
     }
 
     private fun signupUser(name: String, email: String, password: String, gender: String){
-        databaseReference.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(object: ValueEventListener{
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if(!dataSnapshot.exists()){
-                    val id = databaseReference.push().key
-                    val userData = UserData(id = id, name = name, email = email, password = password, gender = gender)
-
-                    Log.i(TAG, "signupUser: $userData")
-                    databaseReference.child(id!!).setValue(userData)
+        coroutineScope.launch {
+            showProgressBar(true)
+            try {
+                val userExists = withContext(Dispatchers.IO) {
+                    checkIfUserExists(email)
+                }
+                if(!userExists){
+                    val id = withContext(Dispatchers.IO) {
+                        registerNewUser(name, email, password, gender)
+                    }
                     showToast("Signup Successful")
                     startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
                     finish()
-                }
-                else{
+                }else{
                     showToast("Email should be unique")
+                    validForm(FormKey.EMAIL, "Email should be unique")
+                    binding.tielEmail.requestFocus()
                 }
+            }catch (e: Exception) {
+                showToast("Error: ${e.message}")
             }
-
-            override fun onCancelled(error: DatabaseError) {
-                showToast("Database Error: ${error.message}")
-            }
-
-        })
-
-        /*
-        val id = databaseReference.push().key
-        val userData = UserData(id, name, email, password)
-
-        if (id != null) {
-            databaseReference.child(id).setValue(userData).addOnCompleteListener {
-                if (it.isSuccessful) {
-                    // Data write was successful
-                    Log.i(TAG, "signupUser: user created")
-                    showToast("Signup Successful")
-                    startActivity(Intent(this@RegisterActivity, LoginActivity::class.java))
-                    finish()
-                } else {
-                    // Data write failed
-                    Log.w(TAG, "signupUser: Failed to create user", )
-                }
+            finally {
+                showProgressBar(false)
             }
         }
-*/
-        /*
-        databaseReference.addValueEventListener(object: ValueEventListener{
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                for (snapshot in dataSnapshot.children) {
-                    val user = snapshot.getValue(UserData::class.java)
-                    // Use the user object as needed
-                    Log.i(TAG, "onDataChange: $user")
+    }
+
+    private suspend fun checkIfUserExists(email: String): Boolean {
+        return suspendCoroutine { continuation ->
+            databaseReference.orderByChild("email")
+                .equalTo(email)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    continuation.resume(dataSnapshot.exists())
                 }
 
-            }
+                override fun onCancelled(error: DatabaseError) {
+                    continuation.resumeWithException(error.toException())
+                }
+            })
+        }
+    }
 
-            override fun onCancelled(error: DatabaseError) {
-                showToast("FirebaseError: ${error.message}")
+    private suspend fun registerNewUser(name: String, email: String, password: String, gender: String): String {
+        return suspendCoroutine { continuation ->
+            val id = databaseReference.push().key!!
+            val userData = UserData(id = id, name = name, email = email, password = password, gender = gender)
+            databaseReference.child(id)
+                .setValue(userData).addOnSuccessListener {
+                continuation.resume(id)
+            }.addOnFailureListener { exception ->
+                continuation.resumeWithException(exception)
             }
-
-        })*/
+        }
     }
 
     private fun showToast(message: String?) {
         Toast.makeText(this@RegisterActivity, message.orEmpty(), Toast.LENGTH_SHORT).show()
+    }
+
+    private fun showProgressBar(isLoading: Boolean) {
+        if(isLoading) {
+            binding.loadingOverlay.visibility = View.VISIBLE
+            binding.bSubmit.isEnabled = false
+            binding.loadingOverlay.bringToFront()
+            binding.loadingOverlay.invalidate()
+        } else {
+            binding.loadingOverlay.visibility = View.GONE
+            binding.bSubmit.isEnabled = true
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }

@@ -1,27 +1,37 @@
 package np.com.dipeshsah.ismt
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import android.util.Log
+import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
-import com.google.firebase.database.DatabaseReference
-import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ValueEventListener
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import np.com.dipeshsah.ismt.dashboard.Dashboard
 import np.com.dipeshsah.ismt.databinding.ActivityLoginBinding
 import np.com.dipeshsah.ismt.dto.FormKey
 import np.com.dipeshsah.ismt.models.UserData
+import np.com.dipeshsah.ismt.utils.FirebaseDatabaseHelper
+import kotlin.coroutines.resume
+import kotlin.coroutines.resumeWithException
+import kotlin.coroutines.suspendCoroutine
 
 class LoginActivity : AppCompatActivity() {
-    private val TAG = "Login"
+    private val TAG = "LoginActivity"
     private lateinit var binding:ActivityLoginBinding
-    private lateinit var  firebaseDatabase: FirebaseDatabase
-    private lateinit var databaseReference: DatabaseReference
+    private val job = Job()
+    private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
 
+    @SuppressLint("ClickableViewAccessibility")
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
@@ -29,8 +39,6 @@ class LoginActivity : AppCompatActivity() {
 
         val view = binding.root
         setContentView(view)
-        firebaseDatabase = FirebaseDatabase.getInstance()
-        databaseReference = firebaseDatabase.reference.child("users")
 
         val sharedPreference = this@LoginActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
 
@@ -45,13 +53,13 @@ class LoginActivity : AppCompatActivity() {
         binding.bSubmit.setOnClickListener{
             val email = binding.tielEmail.text.toString()
             val password = binding.tietPassword.text.toString()
-
             if (isValidData(email, password)) {
                 loginUser(email,password)
-            } else {
-                Log.w(TAG, "Bad email or password provided")
-                showToast("Invalid email or password")
             }
+        }
+
+        binding.loadingOverlay.setOnTouchListener { v, event ->
+            true
         }
 
         binding.tvCreateAccount.setOnClickListener{
@@ -63,46 +71,70 @@ class LoginActivity : AppCompatActivity() {
         if(email.isEmpty()){
             validForm(FormKey.EMAIL, "Email is required")
         }
+        // check if email is valid format or not
+        if(!android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()){
+            validForm(FormKey.EMAIL, "Invalid email format")
+            // move cursor to email field
+            binding.tielEmail.requestFocus()
+        }
 
         if(password.isEmpty()){
             validForm(FormKey.PASSWORD, "Password is required")
         }
-        // You can implement your validation logic here
-        // For example, you might check if the email and password meet certain criteria
-        // This is just a placeholder method, you should replace it with your actual logic
-        return email.isNotEmpty() && password.isNotEmpty()
+        return email.isNotEmpty() && password.isNotEmpty() && android.util.Patterns.EMAIL_ADDRESS.matcher(email).matches()
     }
 
     private  fun loginUser(email: String, password: String){
-        databaseReference.orderByChild("email").equalTo(email).addListenerForSingleValueEvent(object: ValueEventListener{
-            override fun onDataChange(dataSnapshot: DataSnapshot) {
-                if(dataSnapshot.exists()){
-                    for(userSnapshot in dataSnapshot.children){
+        coroutineScope.launch {
+           try {
+               showProgressBar(true)
+              val userData = withContext(Dispatchers.IO) {
+                  fetchUserByEmail(email)
+              }
+               if(userData != null && userData.password == password) {
+                   val sharedPreference = getSharedPreferences("app", Context.MODE_PRIVATE)
+                   val editor = sharedPreference.edit()
+                   editor.putBoolean("isLoggedIn", true)
+                   editor.putString("userId", userData.id)
+                   editor.putString("userEmail", userData.email)
+                   editor.apply()
+                   navigateToHomeScreen()
+               }else{
+                   showToast("Invalid email or password")
+                   // clear password field
+                     binding.tietPassword.text?.clear()
+               }
+           }catch (e: Exception) {
+               Log.e(TAG, "Error: ${e.message}")
+               showToast("Database Error: ${e.message}")
+           } finally {
+               showProgressBar(false)
+           }
+        }
+    }
+
+    private suspend fun fetchUserByEmail(email: String): UserData? {
+        return suspendCoroutine { continuation ->
+            FirebaseDatabaseHelper.getDatabaseReference("users")
+                .orderByChild("email")
+                .equalTo(email)
+                .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(dataSnapshot: DataSnapshot) {
+                    for (userSnapshot in dataSnapshot.children) {
                         val userData = userSnapshot.getValue(UserData::class.java)
-
-                        Log.i(TAG, "User data is $userData")
-
-                        if(userData != null && userData.password == password){
-                            // For demonstration, let's just show a toast message
-                            showToast("Login successful!")
-                            val sharedPreference = this@LoginActivity.getSharedPreferences("app", Context.MODE_PRIVATE)
-                            val editior = sharedPreference.edit()
-                            editior.putBoolean("isLoggedIn", true)
-                            editior.putString("userId", userData.id)
-                            editior.putString("userEmail", userData.email)
-                            editior.apply()
-                            navigateToHomeScreen()
+                        if (userData != null) {
+                            continuation.resume(userData)
                             return
                         }
                     }
+                    continuation.resume(null)
                 }
-                showToast("Invalid email or password")
-            }
 
-            override fun onCancelled(error: DatabaseError) {
-                showToast("Database Error: ${error.message}")
-            }
-        })
+                override fun onCancelled(error: DatabaseError) {
+                    continuation.resumeWithException(error.toException())
+                }
+            })
+        }
     }
 
     private fun navigateToHomeScreen() {
@@ -116,19 +148,12 @@ class LoginActivity : AppCompatActivity() {
         Toast.makeText(this@LoginActivity, message, Toast.LENGTH_SHORT).show()
     }
 
-    // Handle click on "Create Account" text
     private fun createAccountClicked() {
-        // You can start the registration activity here
-        // For now, let's just show a toast message
-        showToast("Create Account clicked")
         val registerIntent = Intent(this, RegisterActivity::class.java)
         startActivity(registerIntent);
     }
 
-    // Handle click on "Forgot Password" text
     private fun forgotPasswordClicked(view: android.view.View) {
-        // You can implement forgot password functionality here
-        // For now, let's just show a toast message
         showToast("Forgot Password clicked")
     }
 
@@ -138,5 +163,22 @@ class LoginActivity : AppCompatActivity() {
             FormKey.PASSWORD -> binding.tilPassword.error = value
             else -> {}
         }
+    }
+
+    private fun showProgressBar(isLoading: Boolean) {
+        if(isLoading) {
+            binding.loadingOverlay.visibility = View.VISIBLE
+            binding.bSubmit.isEnabled = false
+            binding.loadingOverlay.bringToFront()
+            binding.loadingOverlay.invalidate()
+        } else {
+            binding.loadingOverlay.visibility = View.GONE
+            binding.bSubmit.isEnabled = true
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        job.cancel()
     }
 }
