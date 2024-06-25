@@ -1,6 +1,5 @@
 package np.com.dipeshsah.ismt.dashboard.fragment
 
-import android.app.Activity
 import android.app.AlertDialog
 import android.content.Context
 import android.content.Intent
@@ -45,6 +44,8 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 import kotlin.coroutines.suspendCoroutine
 import android.Manifest
+import android.app.Activity.RESULT_OK
+import np.com.dipeshsah.ismt.activity.MapActivity
 
 
 class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
@@ -55,10 +56,12 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
     private val job = Job()
     private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
     private val SMS_PERMISSION_CODE = 1
+    private var selectedLatitude: Double? = null
+    private var selectedLongitude: Double? = null
 
     private val updateItemLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
-            if (result.resultCode == Activity.RESULT_OK) {
+            if (result.resultCode == RESULT_OK) {
                 val addSuccess = result.data?.getBooleanExtra("updateSuccess", false) ?: false
                 if (addSuccess) {
                     showSnackbar("Product updated successfully!")
@@ -66,6 +69,24 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
             }
         }
 
+    var mapResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data: Intent? = result.data
+            selectedLatitude = data?.getDoubleExtra("latitude", 0.0)
+            selectedLongitude = data?.getDoubleExtra("longitude", 0.0)
+            val productId = data?.getStringExtra("productId")
+
+            showSnackbar("Latitude: $selectedLatitude, Longitude: $selectedLongitude , productId: $productId")
+            // Save to database
+            if (selectedLatitude != null && selectedLongitude != null) {
+                //saveSelectedLocation(selectedLatitude!!, selectedLongitude!!)
+                // Use the selected location (e.g., update the UI)
+                productId?.let {
+                    updatedProductLocation(it, selectedLatitude!!, selectedLongitude!!)
+                }
+            }
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
     }
@@ -118,6 +139,7 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
 
     private fun fetchMyItems(productList: List<ProductData>) {
         if (productList.isNotEmpty()) {
+            Log.i(TAG, "Products found: ${productList.toString()}")
             binding.rvProductList.layoutManager = LinearLayoutManager(context)
             productAdapter = MyProductAdapter(productList)
             binding.rvProductList.adapter = productAdapter
@@ -130,6 +152,28 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
         }
     }
 
+    private fun updatedProductLocation(productId: String, latitude: Double, longitude: Double) {
+        coroutineScope.launch {
+            try {
+                withContext(Dispatchers.IO) {
+                    FirebaseDatabaseHelper.getDatabaseReference("products/$productId")
+                        .child("storeLocationLat")
+                        .setValue(latitude)
+                        .await()
+
+                    FirebaseDatabaseHelper.getDatabaseReference("products/$productId")
+                        .child("storeLocationLng")
+                        .setValue(longitude)
+                        .await()
+                }
+                showSnackbar("Product location updated successfully!")
+                getProductList()
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to update product location: ${e.message}")
+                showSnackbar("Something went wrong!")
+            }
+        }
+    }
     private fun getProductList() {
         coroutineScope.launch {
             binding.progressBar.visibility = View.VISIBLE
@@ -137,7 +181,12 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
                 val productList = withContext(Dispatchers.IO) {
                     fetchProductListFromFirebase()
                 }
-                fetchMyItems(productList)
+                // reorder the product list based on markAsPurchased and has location data
+               val sortedProductList = productList.sortedWith(compareBy<ProductData> { it.markAsPurchased }
+                    .thenBy { it.storeLocationLat != 0.0 && it.storeLocationLng != 0.0 }
+                    .thenBy { it.name })
+
+                fetchMyItems(sortedProductList)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to fetch product list: ${e.message}")
                 fetchMyItems(emptyList())
@@ -301,20 +350,6 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
         }
     }
 
-    /*
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == SMS_PERMISSION_CODE) {
-            if ((grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED)) {
-                // Permission granted, show the SMS dialog again to resend the message
-                showSendSmsDialog()
-            } else {
-                showSnackbar("SMS permission denied")
-            }
-        }
-    }
-     */
-
     override fun onUpdateClick(product: ProductData) {
         val intent = Intent(context, AddOrUpdateProductActivity::class.java)
         intent.putExtra("action", ActionType.UPDATE)
@@ -342,12 +377,15 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
     }
 
     override fun onShareClick(product: ProductData) {
-        showSnackbar("Share button clicked for product: ${product.name}")
         showSendSmsDialog(product)
     }
 
     override fun onLocationClick(product: ProductData) {
-        showSnackbar("Location button clicked for product: ${product.name}")
+        val intent = Intent(requireContext(), MapActivity::class.java)
+        intent.putExtra("latitude", selectedLatitude ?: 0.0)
+        intent.putExtra("longitude", selectedLongitude ?: 0.0)
+        intent.putExtra("productId", product.productId)
+        mapResultLauncher.launch(intent)
     }
 
     override fun onDestroy() {

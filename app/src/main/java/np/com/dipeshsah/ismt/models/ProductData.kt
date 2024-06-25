@@ -8,8 +8,8 @@ data class ProductData(
     var price: Int? = null,
     var quantity: Int? = null,
     var image: String? = null,
-    var storeLocationLat: String? = null,
-    var storeLocationLng: String? = null,
+    var storeLocationLat: Double? = null,
+    var storeLocationLng: Double? = null,
     val userId: String? = null,
     var markAsPurchased: Boolean = false
 )

@@ -51,7 +51,12 @@ class MyProductAdapter( private val productList: List<ProductData>) : RecyclerVi
             .into(holder.productImage)
 
         if(product.markAsPurchased){
-            holder.cardView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(holder.cardView.context, R.color.secondary2))
+            holder.cardView.backgroundTintList = ColorStateList.valueOf(ContextCompat.getColor(holder.cardView.context, R.color.test))
+        }
+
+        if(product.storeLocationLat != 0.0 || product.storeLocationLng != 0.0) {
+            holder.locationButton.setBackgroundColor(ContextCompat.getColor(holder.locationButton.context, R.color.accent2))
+            holder.locationButton.iconTint = ContextCompat.getColorStateList(holder.locationButton.context, R.color.whitesh)
         }
 
         holder.purchaseButton.setOnClickListener {

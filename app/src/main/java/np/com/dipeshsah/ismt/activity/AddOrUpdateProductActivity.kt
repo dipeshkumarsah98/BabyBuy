@@ -205,8 +205,8 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                     description = binding.tietProductDescription.text.toString(),
                     quantity = binding.tietProductQuantity.text.toString().toInt(),
                     markAsPurchased = binding.cbPhurchased.isActivated,
-                    storeLocationLat = 0.0.toString(),
-                    storeLocationLng = 0.0.toString()
+                    storeLocationLat = 0.0,
+                    storeLocationLng = 0.0
                 )
                 withContext(Dispatchers.IO) {
                     FirebaseDatabaseHelper.createProduct(productId, productData)
@@ -250,8 +250,8 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                     description = binding.tietProductDescription.text.toString(),
                     quantity = binding.tietProductQuantity.text.toString().toInt(),
                     markAsPurchased = binding.cbPhurchased.isActivated,
-                    storeLocationLat = 0.0.toString(),
-                    storeLocationLng = 0.0.toString()
+                    storeLocationLat = 0.0,
+                    storeLocationLng = 0.0
                 )
                 withContext(Dispatchers.IO) {
                     FirebaseDatabaseHelper.createProduct(productId, productData)

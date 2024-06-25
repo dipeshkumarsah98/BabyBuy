@@ -41,6 +41,7 @@ android {
 
 dependencies {
 
+    implementation(libs.play.services.maps)
     annotationProcessor("com.github.bumptech.glide:compiler:4.11.0")
     implementation(libs.firebase.storage)
     implementation(libs.androidx.core.ktx)
@@ -56,6 +57,9 @@ dependencies {
     implementation ("de.hdodenhof:circleimageview:3.1.0")
     implementation("com.github.bumptech.glide:glide:4.11.0")
     implementation ("it.xabaras.android:recyclerview-swipedecorator:1.4")
+    implementation ("com.google.android.gms:play-services-maps:18.0.2")
+    implementation ("com.google.android.gms:play-services-location:20.0.0")
+    implementation ("com.google.android.libraries.places:places:3.1.0")
 
     val room_version = "2.6.1"
     implementation("androidx.room:room-runtime:$room_version")

@@ -5,6 +5,7 @@ import android.widget.ImageView
 import android.widget.TextView
 import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 import np.com.dipeshsah.ismt.R
 class MyProductViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
     val productName: TextView = itemView.findViewById(R.id.tv_productName)
@@ -14,6 +15,6 @@ class MyProductViewHolder(itemView: View): RecyclerView.ViewHolder(itemView) {
     val cardView: ConstraintLayout = itemView.findViewById(R.id.card)
     val productQuantity: TextView = itemView.findViewById(R.id.tv_quanity)
     val purchaseButton: Button = itemView.findViewById(R.id.tb_purchaseNow)
-    val locationButton: Button = itemView.findViewById(R.id.tb_addLocation)
+    val locationButton: MaterialButton = itemView.findViewById(R.id.tb_addLocation)
     val shareButton: Button = itemView.findViewById(R.id.tb_shareNow)
 }
