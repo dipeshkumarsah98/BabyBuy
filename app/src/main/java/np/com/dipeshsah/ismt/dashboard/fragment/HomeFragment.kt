@@ -146,6 +146,7 @@ class HomeFragment : Fragment(), ProductAdapter.OnItemClickListener {
         binding.rvSuggestion.layoutManager = LinearLayoutManager(context)
         productAdapter = ProductAdapter(products)
         binding.rvSuggestion.adapter = productAdapter
+        productAdapter.setOnItemClickListener(this)
     }
 
 
@@ -212,7 +213,7 @@ class HomeFragment : Fragment(), ProductAdapter.OnItemClickListener {
     }
 
     override fun onProductDeleteClick(product: ProductData) {
-        showSnackbar("Delete clicked")
+        showSnackbar("Can't delete item from suggestions!")
     }
 
     override fun onProductAddClick(product: ProductData) {
