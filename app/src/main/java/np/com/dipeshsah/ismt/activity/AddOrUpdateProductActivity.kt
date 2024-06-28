@@ -47,7 +47,24 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
     private var currentImageUri: Uri? = null
     private val job = Job()
     private val coroutineScope = CoroutineScope(Dispatchers.Main + job)
+    private var selectedLongitute: Double = 0.0
+    private var selectedLatitude: Double = 0.0
 
+    var mapResultLauncher = registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
+        if (result.resultCode == RESULT_OK) {
+            val data: Intent? = result.data
+            val latitude = data?.getDoubleExtra("latitude", 0.0)
+            val longitude = data?.getDoubleExtra("longitude", 0.0)
+            // Save to database
+            if (latitude != null && longitude != null) {
+                   selectedLongitute = longitude
+                    selectedLatitude = latitude
+                    binding.tvLocationAddress.text = "long: $longitude \nlati: $latitude"
+                    binding.tbAddLocation.setText("Update Location")
+                    binding.tbAddLocation.setBackgroundColor(getColor(R.color.accent2))
+            }
+        }
+    }
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         binding = ActivityAddOrUpdateProductBinding.inflate(layoutInflater)
@@ -88,6 +105,7 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                         .getValue(ProductData::class.java)
                 }
                 productData?.let {
+                    Log.i(TAG, "Update Product data: $it")
                     binding.tietProductName.setText(it.name)
                     binding.tietProductDescription.setText(it.description)
                     binding.tietProductPrice.setText(it.price.toString())
@@ -102,6 +120,11 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                             .error(R.drawable.ic_baseline_24)
                             .into(binding.productImage)
                     }
+                    binding.tbAddLocation.text = "Update Location"
+                    binding.tvLocationAddress.text = "long: ${it.storeLocationLng} \nlati: ${it.storeLocationLat}"
+                    binding.tbAddLocation.setBackgroundColor(getColor(R.color.accent2))
+                    selectedLongitute = it.storeLocationLng!!
+                    selectedLatitude = it.storeLocationLat!!
                 }
                 showProgressBar(false)
             } catch (exception: Exception) {
@@ -205,8 +228,8 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                     description = binding.tietProductDescription.text.toString(),
                     quantity = binding.tietProductQuantity.text.toString().toInt(),
                     markAsPurchased = binding.cbPhurchased.isActivated,
-                    storeLocationLat = 0.0,
-                    storeLocationLng = 0.0
+                    storeLocationLat = selectedLatitude,
+                    storeLocationLng = selectedLongitute,
                 )
                 withContext(Dispatchers.IO) {
                     FirebaseDatabaseHelper.createProduct(productId, productData)
@@ -250,8 +273,8 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                     description = binding.tietProductDescription.text.toString(),
                     quantity = binding.tietProductQuantity.text.toString().toInt(),
                     markAsPurchased = binding.cbPhurchased.isActivated,
-                    storeLocationLat = 0.0,
-                    storeLocationLng = 0.0
+                    storeLocationLat = selectedLatitude,
+                    storeLocationLng = selectedLongitute
                 )
                 withContext(Dispatchers.IO) {
                     FirebaseDatabaseHelper.createProduct(productId, productData)
@@ -418,6 +441,7 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                 }
             }
         }
+        binding.tvLocationAddress.text = "long: $selectedLatitude \nlati: $selectedLongitute"
 
         binding.bSubmit.setOnClickListener {
             handleNewProduct()
@@ -439,6 +463,13 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
         }
         binding.bCancel.setOnClickListener {
             finish()
+        }
+
+        binding.tbAddLocation.setOnClickListener {
+            val intent = Intent(this, MapActivity::class.java)
+            intent.putExtra("latitude", selectedLatitude)
+            intent.putExtra("longitude", selectedLongitute)
+            mapResultLauncher.launch(intent)
         }
     }
 

@@ -28,6 +28,7 @@ import com.google.android.libraries.places.api.net.PlacesClient
 import com.google.android.libraries.places.api.net.PlacesStatusCodes
 import com.google.android.libraries.places.widget.AutocompleteSupportFragment
 import com.google.android.libraries.places.widget.listener.PlaceSelectionListener
+import com.google.android.material.button.MaterialButton
 import np.com.dipeshsah.ismt.R
 
 class MapActivity : AppCompatActivity(), OnMapReadyCallback {
@@ -53,6 +54,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val selectLocationButton = findViewById<Button>(R.id.selectLocationButton)
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
 
+        val cancelLocationButton = findViewById<MaterialButton>(R.id.tb_cancelMap)
+
         intent.hasExtra("productId").let {
             productId = intent.getStringExtra("productId").toString()
         }
@@ -67,6 +70,10 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
                 setResult(RESULT_OK, intent)
                 finish()
             }
+        }
+
+        cancelLocationButton.setOnClickListener {
+            finish()
         }
 
         checkLocationPermission()
