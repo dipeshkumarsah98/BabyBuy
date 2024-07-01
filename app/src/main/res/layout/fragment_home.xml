@@ -328,11 +328,11 @@
     android:id="@+id/fab_add"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:src="@drawable/add_a_image_white_icon"
+    android:src="@drawable/add_white_icon_24"
     app:layout_constraintBottom_toBottomOf="parent"
     app:layout_constraintEnd_toEndOf="parent"
     android:layout_marginEnd="16dp"
-    android:backgroundTint="@color/accent2"
+    android:backgroundTint="@color/secondary2"
     android:layout_marginBottom="16dp"
     />
 
