@@ -162,6 +162,8 @@ class MapActivity : AppCompatActivity(), OnMapReadyCallback {
         val previousLatitude = intent.getDoubleExtra("latitude", 0.0)
         val previousLongitude = intent.getDoubleExtra("longitude", 0.0)
 
+        Log.i("MAP", "Latitude: $previousLatitude, Longitude: $previousLongitude")
+
         if (previousLatitude != 0.0 && previousLongitude != 0.0) {
             selectedLocation = LatLng(previousLatitude, previousLongitude)
             selectedMarker = map.addMarker(MarkerOptions().position(selectedLocation!!).title("Selected Location"))

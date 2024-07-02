@@ -382,8 +382,8 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
 
     override fun onLocationClick(product: ProductData) {
         val intent = Intent(requireContext(), MapActivity::class.java)
-        intent.putExtra("latitude", selectedLatitude ?: 0.0)
-        intent.putExtra("longitude", selectedLongitude ?: 0.0)
+        intent.putExtra("latitude", product.storeLocationLat ?: 0.0)
+        intent.putExtra("longitude", product.storeLocationLng ?: 0.0)
         intent.putExtra("productId", product.productId)
         mapResultLauncher.launch(intent)
     }

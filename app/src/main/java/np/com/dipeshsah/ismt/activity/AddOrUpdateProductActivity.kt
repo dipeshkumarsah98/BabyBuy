@@ -422,6 +422,7 @@ class AddOrUpdateProductActivity : AppCompatActivity() {
                 val productId = intent.getStringExtra("productId")
                 binding.bSubmit.text = "Update"
                 binding.bSubmit.icon = getDrawable(R.drawable.edit_icon)
+                binding.tvTitle.text = "Update item"
                 Log.i(TAG, "Update -> process -> Product id: $productId")
                 if (productId != null) {
                     updateProductId = productId
