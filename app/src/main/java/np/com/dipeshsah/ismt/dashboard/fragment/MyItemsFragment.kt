@@ -65,6 +65,7 @@ class MyItemsFragment : Fragment(), MyProductAdapter.OnItemClickListener {
                 val addSuccess = result.data?.getBooleanExtra("updateSuccess", false) ?: false
                 if (addSuccess) {
                     showSnackbar("Product updated successfully!")
+                    getProductList()
                 }
             }
         }

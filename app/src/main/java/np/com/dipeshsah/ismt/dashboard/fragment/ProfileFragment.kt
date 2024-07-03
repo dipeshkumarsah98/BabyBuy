@@ -42,7 +42,10 @@ class ProfileFragment : Fragment() {
         if (result.resultCode == Activity.RESULT_OK) {
             val updateSuccess = result.data?.getBooleanExtra("updateSuccess", false) ?: false
             if (updateSuccess) {
+                val sharedPreference = activity?.getSharedPreferences("app", 0)
+                val userId = sharedPreference?.getString("userId", null)
                 showSnackbar("Profile updated successfully!")
+                getUserData(userId!!);
             }
         }
     }
