@@ -20,9 +20,6 @@ BabyBuy is an Android application designed to help parents create a list of item
 BabyBuy is developed to assist expecting parents in organizing and managing the list of items required for their newborn. With a user-friendly interface and essential features, it simplifies the process of item management, delegation, and location tracking.
 
 ## Features
-
-- User registration and login
-- Create, edit, and delete items
 - Upload or take a picture of the item
 - Mark items as purchased
 - Delegate items to contacts via SMS
@@ -45,43 +42,11 @@ BabyBuy is developed to assist expecting parents in organizing and managing the 
 ### Wireframe
 ![image](https://github.com/dipeshkumarsah98/BabyBuy/assets/63381568/d38eb84e-b816-4de2-8b1f-d548dc2c7664)
 
-### Flowchart
-![diagram-export-6-29-2024-1_46_24-AM](https://github.com/dipeshkumarsah98/BabyBuy/assets/63381568/676be832-f372-4f3f-9ec2-16565bc9df92)
-
 ### Sequential Diagram
 ![diagram-export-6-29-2024-1_47_23-AM](https://github.com/dipeshkumarsah98/BabyBuy/assets/63381568/002b4998-2e6e-49e1-be0d-0e573c79061a)
 
-### ER Diagram
-![diagram-export-6-29-2024-1_48_46-AM](https://github.com/dipeshkumarsah98/BabyBuy/assets/63381568/e1615a45-5a28-4e36-8938-fe38ebd49ed7)
-
-## Database Schema
-
-```plaintext
-users [icon: user, color: blue] {
-  id string pk
-  gender string
-  name string
-  email string
-  profileImage string
-  password string
-}
-
-products [icon: package, color: green] {
-  productId string pk
-  name string
-  description string
-  category string
-  price int
-  quantity int
-  image string
-  storeLocationLat double
-  storeLocationLng double
-  userId string
-  markAsPurchased boolean
-}
-
-users.id <> products.userId
-```
+### Flowchart
+![babybuyFlowChart](https://github.com/dipeshkumarsah98/BabyBuy/assets/63381568/39a91da5-fb81-4fa3-b384-1d8cdc893ce7)
 
 ## Technology Stack
 - **Programming Language**: Kotlin
